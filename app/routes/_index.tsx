@@ -1,43 +1,41 @@
 import type { MetaFunction } from "@remix-run/node";
 import React from "react";
-import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
 import { useDelayedFlag } from "~/hooks/use_delayed_flag";
-import {
-  ChatCompletionDelta,
-  ChatCompletionDeltaSchema,
-  ChatCompletionMessage,
-} from "~/lib/schema";
-import { accumulateMessage, deltaToAssistantMessage } from "~/lib/messages";
+import { ChatCompletionMessage } from "~/lib/schema";
+import { deltaToAssistantMessage } from "~/lib/messages";
+import { chatCompletion } from "~/api/chat_api";
 
 export const meta: MetaFunction = () => {
   return [
     { title: "New Remix App" },
     { name: "description", content: "Welcome to Remix!" },
+    {
+      name: "viewport",
+      content:
+        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+    },
   ];
 };
 
 export default function Index() {
   const [messages, setMessages] = React.useState<ChatCompletionMessage[]>([]);
   const [streamedMessage, setStreamedMessage] =
-    React.useState<ChatCompletionDelta | null>(null);
-  const [abortController, setAbortController] =
-    React.useState<AbortController | null>(null);
+    React.useState<ChatCompletionMessage | null>(null);
+  const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
 
   const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
 
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
       if (lastMessage) {
-        setMessages((prev) => [...prev, deltaToAssistantMessage(lastMessage)]);
+        setMessages((prev) => [...prev, lastMessage]);
       }
       return null;
     });
-    if (abortController) {
-      abortController.abort();
-    }
-    setAbortController(null);
+
+    setAbortFunc(null);
     resetShowAbort();
   };
 
@@ -48,52 +46,27 @@ export default function Index() {
       content: message,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
 
-    const ctrl = new AbortController();
-    setAbortController(ctrl);
+    const { abort, promise } = chatCompletion({
+      messages: newMessages,
+      onMessageUpdate: setStreamedMessage,
+      onDone: finishStreaming,
+    });
 
+    setAbortFunc(() => abort);
     setShowAbortDelayed(1000);
 
-    await fetchEventSource("/api/message", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [...messages, userMessage],
-      }),
-      signal: ctrl.signal,
-      openWhenHidden: true,
-      onmessage(e) {
-        console.log(e.data);
-        if (e.event === "done") {
-          finishStreaming();
-          return;
-        }
-
-        const delta = ChatCompletionDeltaSchema.parse(JSON.parse(e.data));
-        setStreamedMessage((prev) => accumulateMessage(prev, delta));
-      },
-      onclose() {
-        finishStreaming();
-      },
-      onerror(e) {
-        console.error(e);
-        finishStreaming();
-      },
-    });
+    await promise;
   };
 
-  const abort = () => {
-    if (abortController) {
-      abortController.abort();
-      setAbortController(null);
-      finishStreaming();
-    }
+  const onAbort = () => {
+    abortFunc?.();
+    finishStreaming();
   };
 
-  const shouldShowAbortButton = abortController !== null && showAbort;
+  const shouldShowAbortButton = abortFunc !== null && showAbort;
 
   const allMessages = streamedMessage
     ? [...messages, deltaToAssistantMessage(streamedMessage)]
@@ -104,7 +77,7 @@ export default function Index() {
       <ScrollableMessageList
         messages={allMessages}
         showAbort={shouldShowAbortButton}
-        onAbort={abort}
+        onAbort={onAbort}
       />
 
       <ChatMessageInput onSubmit={postMessage} disabled={!!streamedMessage} />

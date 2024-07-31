@@ -12,8 +12,12 @@ export function ChatMessageInput({
   const [messageDraft, setMessageDraft] = React.useState("");
 
   const submit = async () => {
+    if (disabled || messageDraft.trim() === "") {
+      return;
+    }
+
     setMessageDraft("");
-    await onSubmit(messageDraft);
+    await onSubmit(messageDraft.trim());
   };
 
   return (
@@ -39,7 +43,7 @@ export function ChatMessageInput({
           onClick={async () => {
             await submit();
           }}
-          disabled={!messageDraft || disabled}
+          disabled={messageDraft.trim() === "" || disabled}
         >
           Send
         </Button>
