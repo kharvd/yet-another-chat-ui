@@ -8,10 +8,12 @@ import {
 
 export function chatCompletion({
   messages,
+  model,
   onMessageUpdate,
   onDone,
 }: {
   messages: ChatCompletionMessage[];
+  model: string;
   onMessageUpdate: (message: ChatCompletionMessage) => void;
   onDone: () => void;
 }): { abort: () => void; promise: Promise<void> } {
@@ -25,6 +27,7 @@ export function chatCompletion({
     },
     body: JSON.stringify({
       messages,
+      model,
     }),
     signal: abortController.signal,
     openWhenHidden: true,

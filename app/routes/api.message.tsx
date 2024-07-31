@@ -1,5 +1,16 @@
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import OpenAI from "openai";
+import { z } from "zod";
+
+const RequestSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(["user", "assistant", "system"]),
+      content: z.string(),
+    })
+  ),
+  model: z.string(),
+});
 
 export const action = async ({
   request,
@@ -7,7 +18,7 @@ export const action = async ({
   const client = new OpenAI({
     apiKey: process.env["OPENAI_API_KEY"],
   });
-  const req = await request.json();
+  const req = RequestSchema.parse(await request.json());
 
   let cancelled = false;
 
@@ -16,7 +27,7 @@ export const action = async ({
       async start(controller) {
         const stream = await client.chat.completions.create({
           messages: req.messages,
-          model: "gpt-4o-mini",
+          model: req.model,
           stream: true,
         });
 

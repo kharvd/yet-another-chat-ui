@@ -6,6 +6,7 @@ import { useDelayedFlag } from "~/hooks/use_delayed_flag";
 import { ChatCompletionMessage } from "~/lib/schema";
 import { deltaToAssistantMessage } from "~/lib/messages";
 import { chatCompletion } from "~/api/chat_api";
+import { ModelSelector } from "~/components/ui/model_selector";
 
 export const meta: MetaFunction = () => {
   return [
@@ -24,8 +25,8 @@ export default function Index() {
   const [streamedMessage, setStreamedMessage] =
     React.useState<ChatCompletionMessage | null>(null);
   const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
-
   const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
+  const [model, setModel] = React.useState("gpt-4o-mini-2024-07-18");
 
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
@@ -51,6 +52,7 @@ export default function Index() {
 
     const { abort, promise } = chatCompletion({
       messages: newMessages,
+      model,
       onMessageUpdate: setStreamedMessage,
       onDone: finishStreaming,
     });
@@ -73,7 +75,10 @@ export default function Index() {
     : messages;
 
   return (
-    <div className="font-sans flex flex-col h-[calc(100dvh)] overflow-hidden">
+    <div className="font-sans flex flex-col h-[calc(100dvh)]">
+      <div className="flex justify-center pt-4">
+        <ModelSelector value={model} onChange={setModel} />
+      </div>
       <ScrollableMessageList
         messages={allMessages}
         showAbort={shouldShowAbortButton}
