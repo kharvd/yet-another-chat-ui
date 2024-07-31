@@ -73,7 +73,7 @@ export default function Index() {
     : messages;
 
   return (
-    <div className="font-sans flex flex-col h-screen">
+    <div className="font-sans flex flex-col h-[calc(100dvh)] overflow-hidden">
       <ScrollableMessageList
         messages={allMessages}
         showAbort={shouldShowAbortButton}
