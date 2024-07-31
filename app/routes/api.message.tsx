@@ -24,7 +24,14 @@ export const action = async ({
           if (cancelled) {
             break;
           }
-          controller.enqueue(`data: ${JSON.stringify(chunk)}\n\n`);
+
+          if (chunk.choices[0].finish_reason === "stop") {
+            controller.enqueue(`event: done\n\n`);
+          } else if (chunk.choices[0].finish_reason === null) {
+            controller.enqueue(
+              `data: ${JSON.stringify(chunk.choices[0].delta)}\n\n`
+            );
+          }
         }
       },
       async cancel() {

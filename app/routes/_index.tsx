@@ -1,14 +1,15 @@
 import type { MetaFunction } from "@remix-run/node";
 import React from "react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import {
-  ChatCompletionChunk,
-  ChatCompletionMessage,
-  ChatCompletionMessageParam,
-} from "openai/resources/index.mjs";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
 import { useDelayedFlag } from "~/hooks/use_delayed_flag";
+import {
+  ChatCompletionDelta,
+  ChatCompletionDeltaSchema,
+  ChatCompletionMessage,
+} from "~/lib/schema";
+import { accumulateMessage, deltaToAssistantMessage } from "~/lib/messages";
 
 export const meta: MetaFunction = () => {
   return [
@@ -18,11 +19,9 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const [messages, setMessages] = React.useState<ChatCompletionMessageParam[]>(
-    []
-  );
+  const [messages, setMessages] = React.useState<ChatCompletionMessage[]>([]);
   const [streamedMessage, setStreamedMessage] =
-    React.useState<ChatCompletionMessage | null>(null);
+    React.useState<ChatCompletionDelta | null>(null);
   const [abortController, setAbortController] =
     React.useState<AbortController | null>(null);
 
@@ -31,7 +30,7 @@ export default function Index() {
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
       if (lastMessage) {
-        setMessages((prev) => [...prev, lastMessage]);
+        setMessages((prev) => [...prev, deltaToAssistantMessage(lastMessage)]);
       }
       return null;
     });
@@ -44,7 +43,7 @@ export default function Index() {
 
   const postMessage = async (message: string) => {
     console.log("postMessage");
-    const userMessage: ChatCompletionMessageParam = {
+    const userMessage: ChatCompletionMessage = {
       role: "user",
       content: message,
     };
@@ -68,20 +67,13 @@ export default function Index() {
       openWhenHidden: true,
       onmessage(e) {
         console.log(e.data);
-        const chunk = JSON.parse(e.data) as ChatCompletionChunk;
-        if (chunk.choices[0].finish_reason === "stop") {
+        if (e.event === "done") {
           finishStreaming();
-        } else if (chunk.choices[0].finish_reason === null) {
-          setStreamedMessage((prev) => {
-            const delta = chunk.choices[0].delta;
-            const role = ((prev?.role ?? "") + (delta.role ?? "")) as any;
-            const content = (prev?.content ?? "") + (delta.content ?? "");
-            return {
-              role,
-              content,
-            };
-          });
+          return;
         }
+
+        const delta = ChatCompletionDeltaSchema.parse(JSON.parse(e.data));
+        setStreamedMessage((prev) => accumulateMessage(prev, delta));
       },
       onclose() {
         finishStreaming();
@@ -104,7 +96,7 @@ export default function Index() {
   const shouldShowAbortButton = abortController !== null && showAbort;
 
   const allMessages = streamedMessage
-    ? [...messages, streamedMessage]
+    ? [...messages, deltaToAssistantMessage(streamedMessage)]
     : messages;
 
   return (
