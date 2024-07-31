@@ -1,7 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
 import React from "react";
-import { Button } from "~/components/ui/button";
-import { Textarea } from "~/components/ui/textarea";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import {
   ChatCompletionChunk,
@@ -10,6 +8,7 @@ import {
 } from "openai/resources/index.mjs";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
+import { useDelayedFlag } from "~/hooks/use_delayed_flag";
 
 export const meta: MetaFunction = () => {
   return [
@@ -26,8 +25,8 @@ export default function Index() {
     React.useState<ChatCompletionMessage | null>(null);
   const [abortController, setAbortController] =
     React.useState<AbortController | null>(null);
-  const [showAbort, setShowAbort] = React.useState(false);
-  const showAbortTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
 
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
@@ -40,11 +39,7 @@ export default function Index() {
       abortController.abort();
     }
     setAbortController(null);
-    if (showAbortTimeoutRef.current) {
-      clearTimeout(showAbortTimeoutRef.current);
-    }
-    showAbortTimeoutRef.current = null;
-    setShowAbort(false);
+    resetShowAbort();
   };
 
   const postMessage = async (message: string) => {
@@ -59,9 +54,7 @@ export default function Index() {
     const ctrl = new AbortController();
     setAbortController(ctrl);
 
-    showAbortTimeoutRef.current = setTimeout(() => {
-      setShowAbort(true);
-    }, 1000);
+    setShowAbortDelayed(1000);
 
     await fetchEventSource("/api/message", {
       method: "POST",
