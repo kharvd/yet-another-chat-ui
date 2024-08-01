@@ -21,6 +21,7 @@
     "@remix-run/node": "^2.10.3",
     "@remix-run/react": "^2.10.3",
     "@remix-run/serve": "^2.10.3",
+    "@tailwindcss/typography": "^0.5.13",
     "@vercel/remix": "^2.10.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -29,6 +30,7 @@
     "openai": "^4.53.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"
