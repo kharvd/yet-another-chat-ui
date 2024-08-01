@@ -37,7 +37,6 @@ export function ChatMessageInput({
           onKeyDown={async (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              console.log("onKeyDown");
               await submit();
             }
           }}

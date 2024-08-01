@@ -77,7 +77,6 @@ export default function Index() {
   };
 
   const postMessage = async (message: string) => {
-    console.log("postMessage");
     const userMessage: ChatCompletionMessage = {
       role: "user",
       content: message,
