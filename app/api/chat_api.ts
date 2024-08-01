@@ -32,7 +32,6 @@ export function chatCompletion({
     signal: abortController.signal,
     openWhenHidden: true,
     onmessage(e) {
-      console.log(e.data);
       if (e.event === "done") {
         onDone();
         return;
