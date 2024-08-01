@@ -1,6 +1,6 @@
 import { ChatCompletionChunk, ChatCompletionMessage } from "~/lib/schema";
 import { Provider, providerForModel } from "../model_defs";
-import { completeOpenAi } from "./openai_provider";
+import { completeHyperbolic, completeOpenAi } from "./openai_provider";
 import { completeAnthropic } from "./anthropic_provider";
 import { CompletionFunction } from "./provider_types";
 
@@ -13,6 +13,7 @@ const completionForProvider: Record<
 > = {
   openai: completeOpenAi,
   anthropic: completeAnthropic,
+  hyperbolic: completeHyperbolic,
 };
 
 export const chatCompletion: CompletionFunction = ({

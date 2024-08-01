@@ -1,4 +1,4 @@
-export type Provider = "openai" | "anthropic";
+export type Provider = "openai" | "anthropic" | "hyperbolic";
 
 export type ModelDef = {
   api_name: string;
@@ -31,6 +31,11 @@ export const MODEL_DEFS: ReadonlyArray<ModelDef> = [
     api_name: "claude-3-opus-20240229",
     display_name: "Claude 3 Opus",
     provider: "anthropic",
+  },
+  {
+    api_name: "meta-llama/Meta-Llama-3.1-405B-Instruct",
+    display_name: "Llama 3.1 405B Instruct",
+    provider: "hyperbolic",
   },
 ] as const;
 
