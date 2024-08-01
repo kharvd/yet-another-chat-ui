@@ -39,8 +39,6 @@ export function ChatMessageInput({
               e.preventDefault();
               console.log("onKeyDown");
               await submit();
-            } else if (e.key === "Enter" && e.shiftKey) {
-              setMessageDraft((prev) => prev + "\n");
             }
           }}
         />
