@@ -15,6 +15,8 @@ import { ModelSelector } from "~/components/ui/model_selector";
 import { useLoaderData } from "@remix-run/react";
 import { isAuthenticated } from "~/lib/auth";
 import { useLocalStorage } from "~/hooks/use_local_storage";
+import { Pencil2Icon } from "@radix-ui/react-icons";
+import { Button } from "~/components/ui/button";
 
 export const meta: MetaFunction = () => {
   return [
@@ -100,6 +102,11 @@ export default function Index() {
     finishStreaming();
   };
 
+  const clearMessages = () => {
+    onAbort();
+    setMessages([]);
+  };
+
   const shouldShowAbortButton = abortFunc !== null && showAbort;
 
   const allMessages = streamedMessage
@@ -108,8 +115,17 @@ export default function Index() {
 
   return (
     <div className="font-sans flex flex-col h-[calc(100dvh)]">
-      <div className="flex justify-center pt-4">
-        <ModelSelector value={model} onChange={setModel} />
+      <div className="flex flex-row pt-4">
+        <div className="flex flex-row flex-grow justify-center">
+          <ModelSelector value={model} onChange={setModel} />
+        </div>
+        <Button
+          variant="outline"
+          className="w-10 h-10 p-0 absolute right-8"
+          onClick={clearMessages}
+        >
+          <Pencil2Icon className="h-6 w-6 opacity-50" />
+        </Button>
       </div>
       <ScrollableMessageList
         messages={allMessages}
