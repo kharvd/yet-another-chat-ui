@@ -7,11 +7,17 @@ export const completeOpenAiGeneric = async function* ({
   model,
   baseURL,
   apiKey,
+  max_tokens,
+  temperature,
+  top_p,
 }: {
   model: string;
   messages: ChatCompletionMessage[];
   baseURL: string | undefined;
   apiKey: string | undefined;
+  max_tokens: number;
+  temperature: number;
+  top_p: number;
 }): AsyncIterable<ChatCompletionChunk> {
   const client = new OpenAI({
     apiKey,
@@ -22,6 +28,9 @@ export const completeOpenAiGeneric = async function* ({
     const stream = await client.chat.completions.create({
       messages,
       model,
+      max_tokens,
+      temperature,
+      top_p,
       stream: true,
     });
 
@@ -70,16 +79,21 @@ export const completeOpenAi: CompletionFunction = ({ messages, model }) => {
   return completeOpenAiGeneric({
     model,
     messages,
+    max_tokens: 4096,
+    temperature: 0.7,
+    top_p: 1,
     baseURL: undefined, // default
     apiKey: process.env.OPENAI_API_KEY,
   });
 };
 
 export const completeHyperbolic: CompletionFunction = ({ messages, model }) => {
-  console.log("hyperbolic api key", process.env.HYPERBOLIC_API_KEY);
   return completeOpenAiGeneric({
     model,
     messages,
+    max_tokens: 2048,
+    temperature: 0.7,
+    top_p: 0.9,
     baseURL: "https://api.hyperbolic.xyz/v1",
     apiKey: process.env.HYPERBOLIC_API_KEY,
   });
