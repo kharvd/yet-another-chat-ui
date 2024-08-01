@@ -16,6 +16,8 @@ import { useLoaderData } from "@remix-run/react";
 import { isAuthenticated } from "~/lib/auth";
 import { useLocalStorage } from "~/hooks/use_local_storage";
 import { ClearButton } from "~/components/ui/clear_button";
+import { cn } from "~/lib/utils";
+import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
 
 export const meta: MetaFunction = () => {
   return [
@@ -60,6 +62,7 @@ export default function Index() {
     "model",
     "claude-3-5-sonnet-20240620"
   );
+  const inputRef = useFocusOnMount<HTMLTextAreaElement>();
 
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
@@ -104,6 +107,9 @@ export default function Index() {
   const clearMessages = () => {
     onAbort();
     setMessages([]);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   const shouldShowAbortButton = abortFunc !== null && showAbort;
@@ -113,7 +119,7 @@ export default function Index() {
     : messages;
 
   return (
-    <div className="font-sans flex flex-col h-[calc(100dvh)]">
+    <div className="font-sans flex flex-col items-center h-[calc(100dvh)]">
       <div className="flex flex-row pt-4">
         <div className="flex flex-row flex-grow justify-center">
           <ModelSelector value={model} onChange={setModel} />
@@ -125,12 +131,18 @@ export default function Index() {
         />
       </div>
       <ScrollableMessageList
+        className={"flex-grow p-4 relative w-full"}
         messages={allMessages}
         showAbort={shouldShowAbortButton}
         onAbort={onAbort}
       />
 
-      <ChatMessageInput onSubmit={postMessage} disabled={!!streamedMessage} />
+      <ChatMessageInput
+        inputRef={inputRef}
+        className={"w-full lg:w-7/12"}
+        onSubmit={postMessage}
+        disabled={!!streamedMessage}
+      />
     </div>
   );
 }

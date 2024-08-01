@@ -1,13 +1,18 @@
 import { Textarea } from "./textarea";
 import { Button } from "./button";
-import React from "react";
+import React, { forwardRef } from "react";
+import { cn } from "~/lib/utils";
 
 export function ChatMessageInput({
   onSubmit,
   disabled,
+  className,
+  inputRef,
 }: {
   onSubmit: (message: string) => Promise<void>;
   disabled: boolean;
+  className?: string;
+  inputRef?: React.Ref<HTMLTextAreaElement>;
 }) {
   const [messageDraft, setMessageDraft] = React.useState("");
 
@@ -21,10 +26,11 @@ export function ChatMessageInput({
   };
 
   return (
-    <div className="border-t p-4 bg-white">
+    <div className={cn("p-4 bg-white", className)}>
       <div className="flex flex-row">
         <Textarea
           className="flex-1 resize-none h-[60px]"
+          ref={inputRef}
           placeholder="Your message here..."
           value={messageDraft}
           onChange={(e) => setMessageDraft(e.target.value)}
