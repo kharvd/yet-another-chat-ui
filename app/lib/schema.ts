@@ -10,3 +10,12 @@ export type ChatCompletionMessage = {
   role: "user" | "assistant" | "system";
   content: string;
 };
+
+export type ChatCompletionChunk =
+  | {
+      event: "delta";
+      delta: ChatCompletionDelta;
+    }
+  | {
+      event: "done";
+    };

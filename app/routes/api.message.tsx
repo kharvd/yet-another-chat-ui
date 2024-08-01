@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, HeadersFunction } from "@remix-run/server-runtime";
 import OpenAI from "openai";
 import { z } from "zod";
+import { chatCompletion } from "~/api/providers/chat_provider";
 import { isAuthenticated } from "~/lib/auth";
 
 const RequestSchema = z.object({
@@ -20,9 +21,6 @@ export const action = async ({
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
   const req = RequestSchema.parse(await request.json());
 
   let cancelled = false;
@@ -30,10 +28,9 @@ export const action = async ({
   const response = new Response(
     new ReadableStream({
       async start(controller) {
-        const stream = await client.chat.completions.create({
+        const stream = chatCompletion({
           messages: req.messages,
           model: req.model,
-          stream: true,
         });
 
         for await (const chunk of stream) {
@@ -41,12 +38,10 @@ export const action = async ({
             break;
           }
 
-          if (chunk.choices[0].finish_reason === "stop") {
+          if (chunk.event === "done") {
             controller.enqueue(`event: done\n\n`);
-          } else if (chunk.choices[0].finish_reason === null) {
-            controller.enqueue(
-              `data: ${JSON.stringify(chunk.choices[0].delta)}\n\n`
-            );
+          } else if (chunk.event === "delta") {
+            controller.enqueue(`data: ${JSON.stringify(chunk.delta)}\n\n`);
           }
         }
       },

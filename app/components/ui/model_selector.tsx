@@ -1,5 +1,6 @@
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import React from "react";
+import { MODEL_DEFS } from "~/api/model_defs";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -11,20 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
-const models = [
-  {
-    value: "gpt-4o-2024-05-13",
-    label: "GPT-4o",
-  },
-  {
-    value: "gpt-4o-mini-2024-07-18",
-    label: "GPT-4o Mini",
-  },
-  {
-    value: "gpt-4-turbo-2024-04-09",
-    label: "GPT-4-Turbo",
-  },
-];
+const models = MODEL_DEFS.map((model) => ({
+  value: model.api_name,
+  label: model.display_name,
+}));
 
 export function ModelSelector({
   value,
