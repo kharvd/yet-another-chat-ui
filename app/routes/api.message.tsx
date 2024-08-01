@@ -1,5 +1,4 @@
-import { ActionFunctionArgs, HeadersFunction } from "@remix-run/server-runtime";
-import OpenAI from "openai";
+import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { z } from "zod";
 import { chatCompletion } from "~/api/providers/chat_provider";
 import { isAuthenticated } from "~/lib/auth";

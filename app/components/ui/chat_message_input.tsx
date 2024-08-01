@@ -1,6 +1,6 @@
 import { Textarea } from "./textarea";
 import { Button } from "./button";
-import React, { forwardRef } from "react";
+import React from "react";
 import { cn } from "~/lib/utils";
 
 export function ChatMessageInput({

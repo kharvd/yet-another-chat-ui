@@ -5,7 +5,7 @@ export const useLocalStorage = (key: string, initialValue: string) => {
 
   React.useEffect(() => {
     setStoredValue(window.localStorage.getItem(key) || initialValue);
-  }, [key]);
+  }, [initialValue, key]);
 
   const setValue = (value: string) => {
     setStoredValue(value);

@@ -63,6 +63,7 @@ export const completeAnthropic: CompletionFunction = async function* ({
             },
           };
         }
+        break;
       case "content_block_stop":
         break;
     }

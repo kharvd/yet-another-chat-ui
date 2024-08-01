@@ -1,6 +1,6 @@
 import React from "react";
 
-export function useScrollToBottom(dependencies: any[]) {
+export function useScrollToBottom(dependencies: React.DependencyList) {
   const [isAtBottom, setIsAtBottom] = React.useState(true);
   const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);
   const scrollToBottom = () => {
@@ -32,6 +32,7 @@ export function useScrollToBottom(dependencies: any[]) {
     if (isAtBottom) {
       scrollToBottom();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dependencies, isAtBottom]);
 
   React.useEffect(() => {

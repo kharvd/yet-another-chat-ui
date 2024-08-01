@@ -17,7 +17,6 @@ import { useLoaderData } from "@remix-run/react";
 import { isAuthenticated } from "~/lib/auth";
 import { useLocalStorage } from "~/hooks/use_local_storage";
 import { ClearButton } from "~/components/ui/clear_button";
-import { cn } from "~/lib/utils";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
 
 export const meta: MetaFunction = () => {
@@ -57,10 +56,6 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 export default function Index() {
   const data = useLoaderData<typeof loader>();
 
-  if (!data.authorized) {
-    return <div>Unauthorized</div>;
-  }
-
   const [messages, setMessages] = React.useState<ChatCompletionMessage[]>([]);
   const [streamedMessage, setStreamedMessage] =
     React.useState<ChatCompletionMessage | null>(null);
@@ -71,6 +66,10 @@ export default function Index() {
     "claude-3-5-sonnet-20240620"
   );
   const inputRef = useFocusOnMount<HTMLTextAreaElement>();
+
+  if (!data.authorized) {
+    return <div>Unauthorized</div>;
+  }
 
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
