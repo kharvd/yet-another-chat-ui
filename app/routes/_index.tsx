@@ -3,7 +3,7 @@ import {
   type LoaderFunctionArgs,
   json,
   HeadersFunction,
-} from "@remix-run/node";
+} from "@vercel/remix";
 import React from "react";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
