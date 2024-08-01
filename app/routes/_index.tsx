@@ -14,6 +14,7 @@ import { chatCompletion } from "~/api/chat_api";
 import { ModelSelector } from "~/components/ui/model_selector";
 import { useLoaderData } from "@remix-run/react";
 import { isAuthenticated } from "~/lib/auth";
+import { useLocalStorage } from "~/hooks/use_local_storage";
 
 export const meta: MetaFunction = () => {
   return [
@@ -54,7 +55,10 @@ export default function Index() {
     React.useState<ChatCompletionMessage | null>(null);
   const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
   const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
-  const [model, setModel] = React.useState("gpt-4o-mini-2024-07-18");
+  const [model, setModel] = useLocalStorage(
+    "model",
+    "claude-3-5-sonnet-20240620"
+  );
 
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
