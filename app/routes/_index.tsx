@@ -3,6 +3,7 @@ import {
   type LoaderFunctionArgs,
   json,
   HeadersFunction,
+  LinksFunction,
 } from "@vercel/remix";
 import React from "react";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
@@ -28,6 +29,13 @@ export const meta: MetaFunction = () => {
       content:
         "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
     },
+  ];
+};
+
+export const links: LinksFunction = () => {
+  return [
+    { rel: "icon", href: "/favicon.ico" },
+    { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
   ];
 };
 
