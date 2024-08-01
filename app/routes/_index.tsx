@@ -1,4 +1,9 @@
-import type { MetaFunction } from "@remix-run/node";
+import {
+  type MetaFunction,
+  type LoaderFunctionArgs,
+  json,
+  HeadersFunction,
+} from "@remix-run/node";
 import React from "react";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
@@ -7,6 +12,8 @@ import { ChatCompletionMessage } from "~/lib/schema";
 import { deltaToAssistantMessage } from "~/lib/messages";
 import { chatCompletion } from "~/api/chat_api";
 import { ModelSelector } from "~/components/ui/model_selector";
+import { useLoaderData } from "@remix-run/react";
+import { isAuthenticated } from "~/lib/auth";
 
 export const meta: MetaFunction = () => {
   return [
@@ -20,7 +27,28 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  if (!isAuthenticated(request)) {
+    return json({ authorized: false }, { status: 401 });
+  }
+
+  return json({ authorized: true });
+};
+
+export const headers: HeadersFunction = ({ loaderHeaders }) => {
+  return {
+    "WWW-Authenticate": "Basic",
+    ...loaderHeaders,
+  };
+};
+
 export default function Index() {
+  const data = useLoaderData<typeof loader>();
+
+  if (!data.authorized) {
+    return <div>Unauthorized</div>;
+  }
+
   const [messages, setMessages] = React.useState<ChatCompletionMessage[]>([]);
   const [streamedMessage, setStreamedMessage] =
     React.useState<ChatCompletionMessage | null>(null);

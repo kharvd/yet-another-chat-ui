@@ -1,6 +1,7 @@
-import { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { ActionFunctionArgs, HeadersFunction } from "@remix-run/server-runtime";
 import OpenAI from "openai";
 import { z } from "zod";
+import { isAuthenticated } from "~/lib/auth";
 
 const RequestSchema = z.object({
   messages: z.array(
@@ -15,8 +16,12 @@ const RequestSchema = z.object({
 export const action = async ({
   request,
 }: ActionFunctionArgs): Promise<Response> => {
+  if (!isAuthenticated(request)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   const client = new OpenAI({
-    apiKey: process.env["OPENAI_API_KEY"],
+    apiKey: process.env.OPENAI_API_KEY,
   });
   const req = RequestSchema.parse(await request.json());
 
