@@ -37,17 +37,23 @@ export function chatCompletion({
         return;
       }
 
-      const delta = ChatCompletionDeltaSchema.parse(JSON.parse(e.data));
-      streamedMessage = accumulateMessage(streamedMessage, delta);
+      if (e.event === "delta") {
+        const delta = ChatCompletionDeltaSchema.parse(JSON.parse(e.data));
+        streamedMessage = accumulateMessage(streamedMessage, delta);
 
-      onMessageUpdate(deltaToAssistantMessage(streamedMessage));
+        onMessageUpdate(deltaToAssistantMessage(streamedMessage));
+      }
+
+      if (e.event === "error") {
+        throw new Error("ChatCompletionStream error");
+      }
     },
     onclose() {
       onDone();
     },
     onerror(e) {
       console.error(e);
-      onDone();
+      throw e;
     },
   });
 

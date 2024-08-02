@@ -39,9 +39,14 @@ export const action = async ({
             if (chunk.event === "done") {
               controller.enqueue(`event: done\n\n`);
             } else if (chunk.event === "delta") {
-              controller.enqueue(`data: ${JSON.stringify(chunk.delta)}\n\n`);
+              controller.enqueue(
+                `event: delta\ndata: ${JSON.stringify(chunk.delta)}\n\n`
+              );
             }
           }
+        } catch (e) {
+          console.error(e);
+          controller.enqueue(`event: error\n\n`);
         } finally {
           controller.close();
         }

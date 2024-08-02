@@ -1,6 +1,6 @@
 import { ScrollArea } from "./scroll-area";
 import { useScrollToBottom } from "~/hooks/use_scroll_to_bottom";
-import { AbortButton } from "./abort_button";
+import { FloatingButton } from "./floating_button";
 import { Message } from "./message";
 import { ChatCompletionMessage } from "~/lib/schema";
 import { cn } from "~/lib/utils";
@@ -8,12 +8,16 @@ import { cn } from "~/lib/utils";
 export function ScrollableMessageList({
   messages,
   showAbort,
+  showError,
   onAbort,
+  onRetry,
   className,
 }: {
   messages: ChatCompletionMessage[];
   showAbort: boolean;
+  showError: boolean;
   onAbort: () => void;
+  onRetry: () => void;
   className?: string;
 }) {
   const scrollToBottomDeps = [messages, showAbort];
@@ -30,7 +34,14 @@ export function ScrollableMessageList({
           ))}
         </div>
       </div>
-      {showAbort ? <AbortButton onAbort={onAbort} /> : null}
+      {showAbort ? (
+        <FloatingButton onClick={onAbort}>Stop</FloatingButton>
+      ) : null}
+      {showError ? (
+        <FloatingButton onClick={onRetry} variant="destructive">
+          Retry
+        </FloatingButton>
+      ) : null}
     </ScrollArea>
   );
 }

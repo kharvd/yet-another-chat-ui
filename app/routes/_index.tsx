@@ -71,6 +71,7 @@ export default function Index() {
     "model",
     "claude-3-5-sonnet-20240620"
   );
+  const [showError, setShowError] = React.useState(false);
   const inputRef = useFocusOnMount<HTMLTextAreaElement>();
 
   const finishStreaming = () => {
@@ -85,17 +86,9 @@ export default function Index() {
     resetShowAbort();
   };
 
-  const postMessage = async (message: string) => {
-    const userMessage: ChatCompletionMessage = {
-      role: "user",
-      content: message,
-    };
-
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-
+  const submit = async (messages: ChatCompletionMessage[]) => {
     const { abort, promise } = chatCompletion({
-      messages: newMessages,
+      messages,
       model,
       onMessageUpdate: setStreamedMessage,
       onDone: finishStreaming,
@@ -104,12 +97,46 @@ export default function Index() {
     setAbortFunc(() => abort);
     setShowAbortDelayed(1000);
 
-    await promise;
+    try {
+      await promise;
+    } catch (e) {
+      finishStreaming();
+      setShowError(true);
+    }
+  };
+
+  const postMessage = async (message: string) => {
+    setShowError(false);
+
+    const userMessage: ChatCompletionMessage = {
+      role: "user",
+      content: message,
+    };
+
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+
+    submit(newMessages);
   };
 
   const onAbort = () => {
     abortFunc?.();
     finishStreaming();
+  };
+
+  const onRetry = () => {
+    onAbort();
+    setShowError(false);
+    const newMessages = [...messages];
+    while (
+      newMessages.length > 0 &&
+      newMessages[newMessages.length - 1].role === "assistant"
+    ) {
+      newMessages.pop();
+    }
+    const userMessage = messages[messages.length - 1].content;
+    messages.pop();
+    postMessage(userMessage);
   };
 
   const clearMessages = () => {
@@ -142,7 +169,9 @@ export default function Index() {
         className={"flex-grow p-4 relative w-full"}
         messages={allMessages}
         showAbort={shouldShowAbortButton}
+        showError={showError}
         onAbort={onAbort}
+        onRetry={onRetry}
       />
 
       <ChatMessageInput
