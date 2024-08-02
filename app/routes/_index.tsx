@@ -9,7 +9,10 @@ import React from "react";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
 import { useDelayedFlag } from "~/hooks/use_delayed_flag";
-import { ChatCompletionMessage } from "~/lib/schema";
+import {
+  ChatCompletionMessage,
+  ChatCompletionMessageSchema,
+} from "~/lib/schema";
 import { deltaToAssistantMessage } from "~/lib/messages";
 import { chatCompletion } from "~/api/chat_api";
 import { ModelSelector } from "~/components/ui/model_selector";
@@ -22,6 +25,7 @@ import { withAuthentication } from "~/lib/auth";
 import { useLocalStorage } from "~/hooks/use_local_storage";
 import { ClearButton } from "~/components/ui/clear_button";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
+import { z } from "zod";
 
 export const meta: MetaFunction = () => {
   return [
@@ -62,14 +66,19 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 export default function Index() {
   useLoaderData<typeof loader>();
 
-  const [messages, setMessages] = React.useState<ChatCompletionMessage[]>([]);
+  const [messages, setMessages] = useLocalStorage(
+    "messages",
+    [],
+    z.array(ChatCompletionMessageSchema)
+  );
   const [streamedMessage, setStreamedMessage] =
     React.useState<ChatCompletionMessage | null>(null);
   const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
   const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
   const [model, setModel] = useLocalStorage(
     "model",
-    "claude-3-5-sonnet-20240620"
+    "claude-3-5-sonnet-20240620",
+    z.string()
   );
   const [showError, setShowError] = React.useState(false);
   const inputRef = useFocusOnMount<HTMLTextAreaElement>();

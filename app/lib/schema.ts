@@ -6,10 +6,16 @@ export const ChatCompletionDeltaSchema = z.object({
 });
 export type ChatCompletionDelta = z.infer<typeof ChatCompletionDeltaSchema>;
 
-export type ChatCompletionMessage = {
-  role: "user" | "assistant" | "system";
-  content: string;
-};
+export const ChatCompletionMessageSchema = z.object({
+  role: z.union([
+    z.literal("user"),
+    z.literal("assistant"),
+    z.literal("system"),
+  ]),
+  content: z.string(),
+});
+
+export type ChatCompletionMessage = z.infer<typeof ChatCompletionMessageSchema>;
 
 export type ChatCompletionChunk =
   | {
