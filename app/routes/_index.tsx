@@ -106,8 +106,6 @@ export default function Index() {
   };
 
   const postMessage = async (message: string) => {
-    setShowError(false);
-
     const userMessage: ChatCompletionMessage = {
       role: "user",
       content: message,
@@ -125,18 +123,19 @@ export default function Index() {
   };
 
   const onRetry = () => {
-    onAbort();
     setShowError(false);
     const newMessages = [...messages];
     while (
-      newMessages.length > 0 &&
+      newMessages.length > 1 &&
       newMessages[newMessages.length - 1].role === "assistant"
     ) {
       newMessages.pop();
     }
-    const userMessage = messages[messages.length - 1].content;
-    messages.pop();
-    postMessage(userMessage);
+    console.log(newMessages);
+
+    setMessages(newMessages);
+    setShowError(false);
+    submit(newMessages);
   };
 
   const clearMessages = () => {
@@ -178,7 +177,7 @@ export default function Index() {
         inputRef={inputRef}
         className={"w-full lg:w-7/12"}
         onSubmit={postMessage}
-        disabled={!!streamedMessage}
+        disabled={!!streamedMessage || showError}
       />
     </div>
   );
