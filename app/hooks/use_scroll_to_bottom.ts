@@ -3,7 +3,7 @@ import React from "react";
 export function useScrollToBottom(dependencies: React.DependencyList) {
   const [isAtBottom, setIsAtBottom] = React.useState(true);
   const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);
-  const scrollToBottom = () => {
+  const scrollToBottom = React.useCallback(() => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector(
         "[data-radix-scroll-area-viewport]"
@@ -14,9 +14,9 @@ export function useScrollToBottom(dependencies: React.DependencyList) {
 
       setIsAtBottom(true);
     }
-  };
+  }, []);
 
-  const handleScroll = () => {
+  const handleScroll = React.useCallback(() => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector(
         "[data-radix-scroll-area-viewport]"
@@ -26,13 +26,13 @@ export function useScrollToBottom(dependencies: React.DependencyList) {
         setIsAtBottom(scrollHeight - scrollTop - clientHeight < 1);
       }
     }
-  };
+  }, []);
 
   React.useEffect(() => {
     if (isAtBottom) {
       scrollToBottom();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dependencies, isAtBottom]);
 
   React.useEffect(() => {

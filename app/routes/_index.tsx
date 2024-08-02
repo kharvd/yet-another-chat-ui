@@ -63,12 +63,14 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
   return headers;
 };
 
+const emptyArray: ChatCompletionMessage[] = [];
+
 export default function Index() {
   useLoaderData<typeof loader>();
 
   const [messages, setMessages] = useLocalStorage(
     "messages",
-    [],
+    emptyArray,
     z.array(ChatCompletionMessageSchema)
   );
   const [streamedMessage, setStreamedMessage] =

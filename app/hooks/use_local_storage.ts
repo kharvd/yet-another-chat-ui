@@ -20,14 +20,17 @@ export const useLocalStorage = <T>(
     }
   }, [initialValue, key]);
 
-  const setValue = (valueOrFunc: React.SetStateAction<T>) => {
-    setStoredValue((prev) => {
-      const value =
-        valueOrFunc instanceof Function ? valueOrFunc(prev) : valueOrFunc;
-      window.localStorage.setItem(key, JSON.stringify(value));
-      return value;
-    });
-  };
+  const setValue = React.useCallback(
+    (valueOrFunc: React.SetStateAction<T>) => {
+      setStoredValue((prev) => {
+        const value =
+          valueOrFunc instanceof Function ? valueOrFunc(prev) : valueOrFunc;
+        window.localStorage.setItem(key, JSON.stringify(value));
+        return value;
+      });
+    },
+    [key]
+  );
 
   return [storedValue, setValue] as const;
 };

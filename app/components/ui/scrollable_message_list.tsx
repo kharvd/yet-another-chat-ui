@@ -24,7 +24,7 @@ export function ScrollableMessageList({
   const { scrollAreaRef } = useScrollToBottom(scrollToBottomDeps);
 
   return (
-    <ScrollArea ref={scrollAreaRef} className={cn("", className)}>
+    <ScrollArea ref={scrollAreaRef} className={className}>
       <div
         className={cn("flex flex-col items-center", showAbort ? "pb-16" : "")}
       >
