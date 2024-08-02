@@ -1,7 +1,7 @@
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { z } from "zod";
 import { chatCompletion } from "~/api/providers/chat_provider";
-import { isAuthenticated } from "~/lib/auth";
+import { requireAuthentication } from "~/lib/auth";
 
 const RequestSchema = z.object({
   messages: z.array(
@@ -16,9 +16,7 @@ const RequestSchema = z.object({
 export const action = async ({
   request,
 }: ActionFunctionArgs): Promise<Response> => {
-  if (!isAuthenticated(request)) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+  await requireAuthentication(request);
 
   const req = RequestSchema.parse(await request.json());
 
@@ -27,21 +25,25 @@ export const action = async ({
   const response = new Response(
     new ReadableStream({
       async start(controller) {
-        const stream = chatCompletion({
-          messages: req.messages,
-          model: req.model,
-        });
+        try {
+          const stream = chatCompletion({
+            messages: req.messages,
+            model: req.model,
+          });
 
-        for await (const chunk of stream) {
-          if (cancelled) {
-            break;
-          }
+          for await (const chunk of stream) {
+            if (cancelled) {
+              break;
+            }
 
-          if (chunk.event === "done") {
-            controller.enqueue(`event: done\n\n`);
-          } else if (chunk.event === "delta") {
-            controller.enqueue(`data: ${JSON.stringify(chunk.delta)}\n\n`);
+            if (chunk.event === "done") {
+              controller.enqueue(`event: done\n\n`);
+            } else if (chunk.event === "delta") {
+              controller.enqueue(`data: ${JSON.stringify(chunk.delta)}\n\n`);
+            }
           }
+        } finally {
+          controller.close();
         }
       },
       async cancel() {

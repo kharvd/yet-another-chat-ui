@@ -13,8 +13,12 @@ import { ChatCompletionMessage } from "~/lib/schema";
 import { deltaToAssistantMessage } from "~/lib/messages";
 import { chatCompletion } from "~/api/chat_api";
 import { ModelSelector } from "~/components/ui/model_selector";
-import { useLoaderData } from "@remix-run/react";
-import { isAuthenticated } from "~/lib/auth";
+import {
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError,
+} from "@remix-run/react";
+import { withAuthentication } from "~/lib/auth";
 import { useLocalStorage } from "~/hooks/use_local_storage";
 import { ClearButton } from "~/components/ui/clear_button";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
@@ -38,23 +42,25 @@ export const links: LinksFunction = () => {
   ];
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  if (!isAuthenticated(request)) {
-    return json({ authorized: false }, { status: 401 });
-  }
-
-  return json({ authorized: true });
-};
+export const loader = withAuthentication(async () => {
+  return json({});
+});
 
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
-  return {
-    "WWW-Authenticate": "Basic",
-    ...loaderHeaders,
-  };
+  const headers = new Headers();
+  const settableHeaders = ["WWW-Authenticate"];
+
+  for (const header of settableHeaders) {
+    if (loaderHeaders.has(header)) {
+      headers.set(header, loaderHeaders.get(header)!);
+    }
+  }
+
+  return headers;
 };
 
 export default function Index() {
-  const data = useLoaderData<typeof loader>();
+  useLoaderData<typeof loader>();
 
   const [messages, setMessages] = React.useState<ChatCompletionMessage[]>([]);
   const [streamedMessage, setStreamedMessage] =
@@ -66,10 +72,6 @@ export default function Index() {
     "claude-3-5-sonnet-20240620"
   );
   const inputRef = useFocusOnMount<HTMLTextAreaElement>();
-
-  if (!data.authorized) {
-    return <div>Unauthorized</div>;
-  }
 
   const finishStreaming = () => {
     setStreamedMessage((lastMessage) => {
@@ -151,4 +153,17 @@ export default function Index() {
       />
     </div>
   );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    switch (error.status) {
+      case 401:
+        return <div>Unauthorized</div>;
+      default:
+        return <div>Error</div>;
+    }
+  }
 }
