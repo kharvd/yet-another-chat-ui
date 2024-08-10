@@ -184,19 +184,20 @@ function useChat(model: string) {
     setMessages([]);
   };
 
-  const shouldShowAbortButton = abortFunc !== null && showAbort;
+  const showAbortButton = abortFunc !== null && showAbort;
 
   return {
-    messages,
-    streamedMessage,
+    messages: streamedMessage
+      ? [...messages, deltaToAssistantMessage(streamedMessage)]
+      : messages,
     postMessage,
-    isLastMessageUser,
+    isInputDisabled: isLastMessageUser,
     clearMessages,
     messageDraft,
     setMessageDraft,
     onAbort,
     onRetry,
-    shouldShowAbortButton,
+    showAbortButton,
     showRetryButton,
   };
 }
@@ -213,21 +214,16 @@ export default function Index() {
 
   const {
     messages,
-    streamedMessage,
     postMessage,
-    isLastMessageUser,
+    isInputDisabled,
     clearMessages,
     messageDraft,
     setMessageDraft,
     onAbort,
     onRetry,
-    shouldShowAbortButton,
+    showAbortButton,
     showRetryButton,
   } = useChat(model);
-
-  const allMessages = streamedMessage
-    ? [...messages, deltaToAssistantMessage(streamedMessage)]
-    : messages;
 
   return (
     <div className="font-sans flex flex-col items-center h-[calc(100dvh)]">
@@ -246,8 +242,8 @@ export default function Index() {
       </div>
       <ScrollableMessageList
         className={"flex-grow p-4 relative w-full"}
-        messages={allMessages}
-        showAbort={shouldShowAbortButton}
+        messages={messages}
+        showAbort={showAbortButton}
         showError={showRetryButton}
         onAbort={onAbort}
         onRetry={onRetry}
@@ -259,7 +255,7 @@ export default function Index() {
         inputRef={inputRef}
         className={"w-full lg:w-7/12"}
         onSubmit={postMessage}
-        disabled={isLastMessageUser}
+        disabled={isInputDisabled}
       />
     </div>
   );
