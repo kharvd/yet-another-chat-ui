@@ -1,6 +1,5 @@
 import {
   type MetaFunction,
-  type LoaderFunctionArgs,
   json,
   HeadersFunction,
   LinksFunction,
@@ -26,6 +25,7 @@ import { useLocalStorage } from "~/hooks/use_local_storage";
 import { ClearButton } from "~/components/ui/clear_button";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
 import { z } from "zod";
+import { useToast } from "~/components/ui/use-toast";
 
 export const meta: MetaFunction = () => {
   return [
@@ -65,27 +65,35 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 
 const emptyArray: ChatCompletionMessage[] = [];
 
-export default function Index() {
-  useLoaderData<typeof loader>();
-
+function useChat(model: string) {
   const [messages, setMessages] = useLocalStorage(
     "messages",
     emptyArray,
     z.array(ChatCompletionMessageSchema)
   );
+  const { toast, dismiss } = useToast();
+  const isStreamingRef = React.useRef(false);
   const [streamedMessage, setStreamedMessage] =
     React.useState<ChatCompletionMessage | null>(null);
   const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
   const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
-  const [model, setModel] = useLocalStorage(
-    "model",
-    "claude-3-5-sonnet-20240620",
-    z.string()
-  );
-  const [showError, setShowError] = React.useState(false);
-  const inputRef = useFocusOnMount<HTMLTextAreaElement>();
+  const [showRetry, setShowRetry] = React.useState(false);
+  const [messageDraft, setMessageDraft] = React.useState("");
+
+  const isLastMessageUser =
+    messages.length > 0 && messages[messages.length - 1].role === "user";
+  const showRetryButton = !isLastMessageUser && showRetry;
+
+  React.useEffect(() => {
+    // restore message draft if it wasn't submitted
+    if (!streamedMessage && !abortFunc && isLastMessageUser) {
+      setMessageDraft(messages[messages.length - 1].content);
+      setMessages((prev) => prev.slice(0, -1));
+    }
+  }, [streamedMessage, messages, isLastMessageUser, abortFunc]);
 
   const finishStreaming = () => {
+    isStreamingRef.current = false;
     setStreamedMessage((lastMessage) => {
       if (lastMessage) {
         setMessages((prev) => [...prev, lastMessage]);
@@ -97,22 +105,47 @@ export default function Index() {
     resetShowAbort();
   };
 
+  const onError = (error: Error) => {
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  };
+
+  const dismissError = () => {
+    dismiss();
+    setShowRetry(false);
+  };
+
   const submit = async (messages: ChatCompletionMessage[]) => {
+    dismissError();
+
     const { abort, promise } = chatCompletion({
       messages,
       model,
-      onMessageUpdate: setStreamedMessage,
+      onMessageUpdate: (message) => {
+        setStreamedMessage(message);
+        isStreamingRef.current = true;
+      },
       onDone: finishStreaming,
     });
 
+    setMessageDraft("");
     setAbortFunc(() => abort);
     setShowAbortDelayed(1000);
 
     try {
       await promise;
     } catch (e) {
-      finishStreaming();
-      setShowError(true);
+      onError(e as Error);
+      if (isStreamingRef.current) {
+        finishStreaming();
+        setShowRetry(true);
+      } else {
+        setAbortFunc(null);
+        resetShowAbort();
+      }
     }
   };
 
@@ -134,7 +167,6 @@ export default function Index() {
   };
 
   const onRetry = () => {
-    setShowError(false);
     const newMessages = [...messages];
     while (
       newMessages.length > 1 &&
@@ -142,22 +174,56 @@ export default function Index() {
     ) {
       newMessages.pop();
     }
-    console.log(newMessages);
 
-    setMessages(newMessages);
-    setShowError(false);
     submit(newMessages);
+    setMessages(newMessages);
   };
 
   const clearMessages = () => {
     onAbort();
     setMessages([]);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
   };
 
   const shouldShowAbortButton = abortFunc !== null && showAbort;
+
+  return {
+    messages,
+    streamedMessage,
+    postMessage,
+    isLastMessageUser,
+    clearMessages,
+    messageDraft,
+    setMessageDraft,
+    onAbort,
+    onRetry,
+    shouldShowAbortButton,
+    showRetryButton,
+  };
+}
+
+export default function Index() {
+  useLoaderData<typeof loader>();
+
+  const [model, setModel] = useLocalStorage(
+    "model",
+    "claude-3-5-sonnet-20240620",
+    z.string()
+  );
+  const inputRef = useFocusOnMount<HTMLTextAreaElement>();
+
+  const {
+    messages,
+    streamedMessage,
+    postMessage,
+    isLastMessageUser,
+    clearMessages,
+    messageDraft,
+    setMessageDraft,
+    onAbort,
+    onRetry,
+    shouldShowAbortButton,
+    showRetryButton,
+  } = useChat(model);
 
   const allMessages = streamedMessage
     ? [...messages, deltaToAssistantMessage(streamedMessage)]
@@ -171,7 +237,10 @@ export default function Index() {
         </div>
 
         <ClearButton
-          clearMessages={clearMessages}
+          clearMessages={() => {
+            clearMessages();
+            inputRef.current?.focus();
+          }}
           className="p-0 absolute right-8"
         />
       </div>
@@ -179,16 +248,18 @@ export default function Index() {
         className={"flex-grow p-4 relative w-full"}
         messages={allMessages}
         showAbort={shouldShowAbortButton}
-        showError={showError}
+        showError={showRetryButton}
         onAbort={onAbort}
         onRetry={onRetry}
       />
 
       <ChatMessageInput
+        messageDraft={messageDraft}
+        onChange={setMessageDraft}
         inputRef={inputRef}
         className={"w-full lg:w-7/12"}
         onSubmit={postMessage}
-        disabled={!!streamedMessage || showError}
+        disabled={isLastMessageUser}
       />
     </div>
   );

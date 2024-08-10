@@ -91,7 +91,7 @@ export const completeHyperbolic: CompletionFunction = ({ messages, model }) => {
   return completeOpenAiGeneric({
     model,
     messages,
-    max_tokens: 2048,
+    max_tokens: 1024,
     temperature: 0.7,
     top_p: 0.9,
     baseURL: "https://api.hyperbolic.xyz/v1",

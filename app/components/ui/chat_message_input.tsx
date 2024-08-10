@@ -4,24 +4,24 @@ import React from "react";
 import { cn } from "~/lib/utils";
 
 export function ChatMessageInput({
+  messageDraft,
   onSubmit,
+  onChange,
   disabled,
   className,
   inputRef,
 }: {
+  messageDraft: string;
   onSubmit: (message: string) => Promise<void>;
+  onChange: (message: string) => void;
   disabled: boolean;
   className?: string;
   inputRef?: React.Ref<HTMLTextAreaElement>;
 }) {
-  const [messageDraft, setMessageDraft] = React.useState("");
-
   const submit = async () => {
     if (disabled || messageDraft.trim() === "") {
       return;
     }
-
-    setMessageDraft("");
     await onSubmit(messageDraft.trim());
   };
 
@@ -33,7 +33,7 @@ export function ChatMessageInput({
           ref={inputRef}
           placeholder="Your message here..."
           value={messageDraft}
-          onChange={(e) => setMessageDraft(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           onKeyDown={async (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
