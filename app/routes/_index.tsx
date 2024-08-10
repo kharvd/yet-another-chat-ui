@@ -1,31 +1,23 @@
 import {
-  type MetaFunction,
-  json,
-  HeadersFunction,
-  LinksFunction,
-} from "@vercel/remix";
-import React from "react";
-import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
-import { ChatMessageInput } from "~/components/ui/chat_message_input";
-import { useDelayedFlag } from "~/hooks/use_delayed_flag";
-import {
-  ChatCompletionMessage,
-  ChatCompletionMessageSchema,
-} from "~/lib/schema";
-import { deltaToAssistantMessage } from "~/lib/messages";
-import { chatCompletion } from "~/api/chat_api";
-import { ModelSelector } from "~/components/ui/model_selector";
-import {
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import { withAuthentication } from "~/lib/auth";
-import { useLocalStorage } from "~/hooks/use_local_storage";
-import { ClearButton } from "~/components/ui/clear_button";
-import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
+import {
+  HeadersFunction,
+  LinksFunction,
+  type MetaFunction,
+  json,
+} from "@vercel/remix";
 import { z } from "zod";
-import { useToast } from "~/components/ui/use-toast";
+import { ChatMessageInput } from "~/components/ui/chat_message_input";
+import { ClearButton } from "~/components/ui/clear_button";
+import { ModelSelector } from "~/components/ui/model_selector";
+import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
+import { useChat } from "~/hooks/use_chat";
+import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
+import { useLocalStorage } from "~/hooks/use_local_storage";
+import { withAuthentication } from "~/lib/auth";
 
 export const meta: MetaFunction = () => {
   return [
@@ -62,145 +54,6 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 
   return headers;
 };
-
-const emptyArray: ChatCompletionMessage[] = [];
-
-function useChat(model: string) {
-  const [messages, setMessages] = useLocalStorage(
-    "messages",
-    emptyArray,
-    z.array(ChatCompletionMessageSchema)
-  );
-  const { toast, dismiss } = useToast();
-  const isStreamingRef = React.useRef(false);
-  const [streamedMessage, setStreamedMessage] =
-    React.useState<ChatCompletionMessage | null>(null);
-  const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
-  const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
-  const [showRetry, setShowRetry] = React.useState(false);
-  const [messageDraft, setMessageDraft] = React.useState("");
-
-  const isLastMessageUser =
-    messages.length > 0 && messages[messages.length - 1].role === "user";
-  const showRetryButton = !isLastMessageUser && showRetry;
-
-  React.useEffect(() => {
-    // restore message draft if it wasn't submitted
-    if (!streamedMessage && !abortFunc && isLastMessageUser) {
-      setMessageDraft(messages[messages.length - 1].content);
-      setMessages((prev) => prev.slice(0, -1));
-    }
-  }, [streamedMessage, messages, isLastMessageUser, abortFunc]);
-
-  const finishStreaming = () => {
-    isStreamingRef.current = false;
-    setStreamedMessage((lastMessage) => {
-      if (lastMessage) {
-        setMessages((prev) => [...prev, lastMessage]);
-      }
-      return null;
-    });
-
-    setAbortFunc(null);
-    resetShowAbort();
-  };
-
-  const onError = (error: Error) => {
-    toast({
-      title: "Error",
-      description: error.message,
-      variant: "destructive",
-    });
-  };
-
-  const dismissError = () => {
-    dismiss();
-    setShowRetry(false);
-  };
-
-  const submit = async (messages: ChatCompletionMessage[]) => {
-    dismissError();
-
-    const { abort, promise } = chatCompletion({
-      messages,
-      model,
-      onMessageUpdate: (message) => {
-        setStreamedMessage(message);
-        isStreamingRef.current = true;
-      },
-      onDone: finishStreaming,
-    });
-
-    setMessageDraft("");
-    setAbortFunc(() => abort);
-    setShowAbortDelayed(1000);
-
-    try {
-      await promise;
-    } catch (e) {
-      onError(e as Error);
-      if (isStreamingRef.current) {
-        finishStreaming();
-        setShowRetry(true);
-      } else {
-        setAbortFunc(null);
-        resetShowAbort();
-      }
-    }
-  };
-
-  const postMessage = async (message: string) => {
-    const userMessage: ChatCompletionMessage = {
-      role: "user",
-      content: message,
-    };
-
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-
-    submit(newMessages);
-  };
-
-  const onAbort = () => {
-    abortFunc?.();
-    finishStreaming();
-  };
-
-  const onRetry = () => {
-    const newMessages = [...messages];
-    while (
-      newMessages.length > 1 &&
-      newMessages[newMessages.length - 1].role === "assistant"
-    ) {
-      newMessages.pop();
-    }
-
-    submit(newMessages);
-    setMessages(newMessages);
-  };
-
-  const clearMessages = () => {
-    onAbort();
-    setMessages([]);
-  };
-
-  const showAbortButton = abortFunc !== null && showAbort;
-
-  return {
-    messages: streamedMessage
-      ? [...messages, deltaToAssistantMessage(streamedMessage)]
-      : messages,
-    postMessage,
-    isInputDisabled: isLastMessageUser,
-    clearMessages,
-    messageDraft,
-    setMessageDraft,
-    onAbort,
-    onRetry,
-    showAbortButton,
-    showRetryButton,
-  };
-}
 
 export default function Index() {
   useLoaderData<typeof loader>();
