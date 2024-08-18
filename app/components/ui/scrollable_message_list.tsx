@@ -28,7 +28,7 @@ export function ScrollableMessageList({
       <div
         className={cn("flex flex-col items-center", showAbort ? "pb-16" : "")}
       >
-        <div className="w-full lg:w-7/12">
+        <div className="w-full lg:w-7/12 pb-4">
           {messages.map((message, index) => (
             <Message key={index} message={message} />
           ))}

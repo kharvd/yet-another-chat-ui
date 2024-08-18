@@ -29,7 +29,7 @@ export function ChatMessageInput({
     <div className={cn("p-4 bg-white", className)}>
       <div className="flex flex-row">
         <Textarea
-          className="flex-1 resize-none h-[60px]"
+          className="flex-1 resize-none min-h-2"
           ref={inputRef}
           placeholder="Your message here..."
           value={messageDraft}

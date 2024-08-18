@@ -35,6 +35,7 @@ export const links: LinksFunction = () => {
   return [
     { rel: "icon", href: "/favicon.ico" },
     { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+    { rel: "manifest", href: "/manifest.json" },
   ];
 };
 
@@ -79,8 +80,9 @@ export default function Index() {
   } = useChat(model);
 
   return (
-    <div className="font-sans flex flex-col items-center h-[calc(100dvh)]">
-      <div className="flex flex-row pt-4">
+    // <div className="font-sans flex flex-col items-center h-[calc(100dvh)]">
+    <div className="font-sans flex flex-col items-center h-full">
+      <div className="flex flex-row pt-2 pb-2">
         <div className="flex flex-row flex-grow justify-center">
           <ModelSelector value={model} onChange={setModel} />
         </div>
@@ -94,7 +96,7 @@ export default function Index() {
         />
       </div>
       <ScrollableMessageList
-        className={"flex-grow p-4 relative w-full"}
+        className={"flex-grow p-4 pb-0 pt-0 relative w-full border-t border-b"}
         messages={messages}
         showAbort={showAbortButton}
         showError={showRetryButton}
@@ -106,7 +108,7 @@ export default function Index() {
         messageDraft={messageDraft}
         onChange={setMessageDraft}
         inputRef={inputRef}
-        className={"w-full lg:w-7/12"}
+        className={"w-full lg:w-7/12 pb-8"}
         onSubmit={postMessage}
         disabled={isInputDisabled}
       />
