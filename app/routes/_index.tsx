@@ -9,6 +9,7 @@ import {
   type MetaFunction,
   json,
 } from "@vercel/remix";
+import React from "react";
 import { z } from "zod";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
 import { ClearButton } from "~/components/ui/clear_button";
@@ -18,6 +19,7 @@ import { useChat } from "~/hooks/use_chat";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
 import { useLocalStorage } from "~/hooks/use_local_storage";
 import { withAuthentication } from "~/lib/auth";
+import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => {
   return [
@@ -80,10 +82,9 @@ export default function Index() {
   } = useChat(model);
 
   return (
-    // <div className="font-sans flex flex-col items-center h-[calc(100dvh)]">
     <div className="font-sans flex flex-col items-center h-full">
-      <div className="flex flex-row pt-2 pb-2">
-        <div className="flex flex-row flex-grow justify-center">
+      <div className={"flex flex-row pt-2 pb-2 w-full"}>
+        <div className="flex flex-row flex-grow justify-center w-fit">
           <ModelSelector value={model} onChange={setModel} />
         </div>
 
@@ -92,11 +93,11 @@ export default function Index() {
             clearMessages();
             inputRef.current?.focus();
           }}
-          className="p-0 absolute right-8"
+          className="p-0 absolute right-4"
         />
       </div>
       <ScrollableMessageList
-        className={"flex-grow p-4 pb-0 pt-0 relative w-full border-t border-b"}
+        className={"flex-grow p-4 pb-0 pt-0 relative w-full border-b"}
         messages={messages}
         showAbort={showAbortButton}
         showError={showRetryButton}

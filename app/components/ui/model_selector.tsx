@@ -29,7 +29,7 @@ export function ModelSelector({
     <DropdownMenu onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           role="combobox"
           aria-expanded={open}
           className="w-[200px] justify-between"

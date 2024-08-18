@@ -20,7 +20,7 @@ export const ClearButton = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             className={cn("w-10 h-10", className)}
             onClick={clearMessages}
           >

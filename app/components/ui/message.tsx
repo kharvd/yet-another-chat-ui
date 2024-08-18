@@ -9,7 +9,7 @@ const messageVariants = cva("mt-4 border-0", {
   variants: {
     variant: {
       assistant: "",
-      user: "bg-gray-50 border-0 rounded-2xl w-fit max-w-[90%]",
+      user: "bg-gray-100 border-0 rounded-2xl w-fit max-w-[90%]",
     },
   },
   defaultVariants: {
