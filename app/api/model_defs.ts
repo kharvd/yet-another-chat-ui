@@ -23,7 +23,7 @@ export const MODEL_DEFS: ReadonlyArray<ModelDef> = [
     provider: "openai",
   },
   {
-    api_name: "claude-3-5-sonnet-20240620",
+    api_name: "claude-3-5-sonnet-20241022",
     display_name: "Claude 3.5 Sonnet",
     provider: "anthropic",
   },
