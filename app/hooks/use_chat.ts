@@ -1,27 +1,24 @@
 import React from "react";
-import { z } from "zod";
 import { chatCompletion } from "~/api/chat_api";
 import { useToast } from "~/components/ui/use-toast";
 import { useDelayedFlag } from "~/hooks/use_delayed_flag";
-import { useLocalStorage } from "~/hooks/use_local_storage";
 import { deltaToAssistantMessage } from "~/lib/messages";
-import {
-  ChatCompletionMessage,
-  ChatCompletionMessageSchema,
-} from "~/lib/schema";
+import { addMessage, popMessage, setMessages } from "~/lib/client_data";
+import { ChatCompletionMessage } from "~/lib/schema";
+import { useChatMessages } from "./use_chat_messages";
+import { v4 as uuidv4 } from "uuid";
 
-const emptyArray: ChatCompletionMessage[] = [];
-
-export function useChat(model: string) {
-  const [messages, setMessages] = useLocalStorage(
-    "messages",
-    emptyArray,
-    z.array(ChatCompletionMessageSchema)
-  );
+export function useChat(chatId: string, model: string) {
+  const messages = useChatMessages(chatId);
   const { toast, dismiss } = useToast();
   const isStreamingRef = React.useRef(false);
   const [streamedMessage, setStreamedMessage] =
     React.useState<ChatCompletionMessage | null>(null);
+  const latestStreamedMessageRef = React.useRef<ChatCompletionMessage | null>(
+    null
+  );
+  latestStreamedMessageRef.current = streamedMessage;
+
   const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
   const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
   const [showRetry, setShowRetry] = React.useState(false);
@@ -36,19 +33,17 @@ export function useChat(model: string) {
   React.useEffect(() => {
     if (isInvalidState) {
       setMessageDraft(messages[messages.length - 1].content);
-      setMessages((prev) => prev.slice(0, -1));
+      popMessage(chatId);
     }
   }, [isInvalidState, messages]);
 
   const finishStreaming = () => {
     isStreamingRef.current = false;
-    setStreamedMessage((lastMessage) => {
-      if (lastMessage) {
-        setMessages((prev) => [...prev, lastMessage]);
-      }
-      return null;
-    });
-
+    setStreamedMessage(null);
+    if (latestStreamedMessageRef.current) {
+      addMessage(chatId, latestStreamedMessageRef.current);
+    }
+    latestStreamedMessageRef.current = null;
     setAbortFunc(null);
     resetShowAbort();
   };
@@ -66,6 +61,7 @@ export function useChat(model: string) {
       model,
       onMessageUpdate: (message) => {
         setStreamedMessage(message);
+        latestStreamedMessageRef.current = message;
         isStreamingRef.current = true;
       },
       onDone: finishStreaming,
@@ -96,13 +92,13 @@ export function useChat(model: string) {
 
   const postMessage = async (message: string) => {
     const userMessage: ChatCompletionMessage = {
+      id: uuidv4(),
       role: "user",
       content: message,
     };
 
     const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-
+    setMessages(chatId, newMessages);
     submit(newMessages);
   };
 
@@ -121,12 +117,7 @@ export function useChat(model: string) {
     }
 
     submit(newMessages);
-    setMessages(newMessages);
-  };
-
-  const clearMessages = () => {
-    onAbort();
-    setMessages([]);
+    setMessages(chatId, newMessages);
   };
 
   return {
@@ -135,7 +126,6 @@ export function useChat(model: string) {
       : messages,
     postMessage,
     isInputDisabled: isLastCommittedMessageUser,
-    clearMessages,
     messageDraft,
     setMessageDraft,
     onAbort,

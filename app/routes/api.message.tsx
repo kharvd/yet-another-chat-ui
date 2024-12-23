@@ -6,6 +6,7 @@ import { requireAuthentication } from "~/lib/auth";
 const RequestSchema = z.object({
   messages: z.array(
     z.object({
+      id: z.string(),
       role: z.enum(["user", "assistant", "system"]),
       content: z.string(),
     })

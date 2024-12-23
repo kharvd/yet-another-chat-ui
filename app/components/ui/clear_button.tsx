@@ -1,4 +1,5 @@
 import { Pencil2Icon } from "@radix-ui/react-icons";
+import { SquarePen } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Tooltip,
@@ -21,10 +22,11 @@ export const ClearButton = ({
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
-            className={cn("w-10 h-10", className)}
+            size="icon"
+            className={cn("w-7 h-7", className)}
             onClick={clearMessages}
           >
-            <Pencil2Icon className="h-6 w-6 opacity-50" />
+            <SquarePen />
           </Button>
         </TooltipTrigger>
         <TooltipContent>

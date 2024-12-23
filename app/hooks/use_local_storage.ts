@@ -1,36 +1,56 @@
-import React from "react";
+import { useEffect } from "react";
 import z from "zod";
+import useSWR from "swr";
+
+const localStorageFetcher = (key: string) => {
+  const item = window.localStorage.getItem(key);
+  if (!item) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(item);
+  } catch (e) {
+    console.error(e);
+    window.localStorage.removeItem(key);
+    return null;
+  }
+};
 
 export const useLocalStorage = <T>(
   key: string,
   initialValue: T,
   schema: z.Schema<T>
-) => {
-  const [storedValue, setStoredValue] = React.useState(initialValue);
+): [T, (value: T, shouldMutate?: boolean) => void] => {
+  const { data, mutate, isLoading } = useSWR(key, localStorageFetcher);
 
-  React.useEffect(() => {
-    const item = window.localStorage.getItem(key);
-    try {
-      const value = item ? schema.parse(JSON.parse(item)) : initialValue;
-      setStoredValue(value);
-    } catch (e) {
-      console.error(e);
-      window.localStorage.removeItem(key);
-      setStoredValue(initialValue);
+  const setValue = (value: T, shouldMutate: boolean = true) => {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    if (shouldMutate) {
+      mutate(value);
     }
-  }, [initialValue, key]);
+  };
 
-  const setValue = React.useCallback(
-    (valueOrFunc: React.SetStateAction<T>) => {
-      setStoredValue((prev) => {
-        const value =
-          valueOrFunc instanceof Function ? valueOrFunc(prev) : valueOrFunc;
-        window.localStorage.setItem(key, JSON.stringify(value));
-        return value;
-      });
-    },
-    [key]
-  );
+  useEffect(() => {
+    if (!data && !isLoading) {
+      setValue(initialValue, true);
+    }
+  }, [data]);
 
-  return [storedValue, setValue] as const;
+  if (isLoading) {
+    return [initialValue, setValue];
+  }
+
+  if (!data) {
+    return [initialValue, setValue];
+  }
+
+  try {
+    const value = schema.parse(data);
+    return [value, setValue];
+  } catch (e) {
+    console.error(e);
+    window.localStorage.removeItem(key);
+    return [initialValue, setValue];
+  }
 };

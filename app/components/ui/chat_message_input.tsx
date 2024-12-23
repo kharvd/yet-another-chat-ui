@@ -2,6 +2,7 @@ import { Textarea } from "./textarea";
 import { Button } from "./button";
 import React from "react";
 import { cn } from "~/lib/utils";
+import { SendHorizonal } from "lucide-react";
 
 export function ChatMessageInput({
   messageDraft,
@@ -27,9 +28,9 @@ export function ChatMessageInput({
 
   return (
     <div className={cn("p-4 bg-white", className)}>
-      <div className="flex flex-row">
+      <div className="flex flex-row items-center gap-2">
         <Textarea
-          className="flex-1 resize-none min-h-2"
+          className="flex-1 resize-none h-10 py-2"
           ref={inputRef}
           placeholder="Your message here..."
           value={messageDraft}
@@ -42,13 +43,14 @@ export function ChatMessageInput({
           }}
         />
         <Button
-          className="ml-2"
+          className="h-12"
+          variant="ghost"
           onClick={async () => {
             await submit();
           }}
           disabled={messageDraft.trim() === "" || disabled}
         >
-          Send
+          <SendHorizonal />
         </Button>
       </div>
     </div>
