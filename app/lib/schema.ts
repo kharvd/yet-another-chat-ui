@@ -34,6 +34,7 @@ export const ChatSchema = z.object({
   title: z.string(),
   messages: z.array(ChatCompletionMessageSchema),
   streamedMessage: z.nullable(ChatCompletionMessageSchema),
+  messageDraft: z.string().optional(),
 });
 export type Chat = z.infer<typeof ChatSchema>;
 

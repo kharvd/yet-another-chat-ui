@@ -1,11 +1,11 @@
 import { Chat, ChatCompletionMessage } from "./schema";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { Draft, produce } from "immer";
 
-type ChatStore = {
-  chats: Chat[];
+type ChatStore = Readonly<{
+  chats: readonly Chat[];
   getChat: (chatId: string) => Chat | null;
-  setChat: (chat: Chat) => void;
   addChatIfNotExists: (chat: Chat) => void;
   deleteChat: (chatId: string) => void;
 
@@ -22,40 +22,52 @@ type ChatStore = {
 
   currentChatId: string | null;
   setCurrentChatId: (chatId: string) => void;
+}>;
+
+const findChat = (chats: readonly Chat[], chatId: string) => {
+  return chats.find((c) => c.id === chatId) ?? null;
 };
 
-export const useChatStore = create<ChatStore>()(
+const updateChat = (
+  state: Draft<ChatStore>,
+  chatId: string,
+  updater: (chat: Chat) => void
+) => {
+  const chat = findChat(state.chats, chatId);
+  if (chat) {
+    updater(chat);
+  }
+};
+
+const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
       chats: [],
       currentChatId: null,
 
       getChat: (chatId) => {
-        const existing = get().chats.find((c) => c.id === chatId);
-        if (existing) {
-          return existing;
-        }
-        return null;
-      },
-
-      setChat: (chat) => {
-        set((state) => ({
-          chats: state.chats.map((c) => (c.id === chat.id ? chat : c)),
-        }));
+        return findChat(get().chats, chatId);
       },
 
       addChatIfNotExists: (chat) => {
         if (get().getChat(chat.id) === null) {
-          set((state) => ({
-            chats: [...state.chats, chat],
-          }));
+          set(
+            produce((state: Draft<ChatStore>) => {
+              state.chats.push(chat);
+            })
+          );
         }
       },
 
       deleteChat: (chatId) => {
-        set((state) => ({
-          chats: state.chats.filter((c) => c.id !== chatId),
-        }));
+        set(
+          produce((state: Draft<ChatStore>) => {
+            const index = state.chats.findIndex((c) => c.id === chatId);
+            if (index !== -1) {
+              state.chats.splice(index, 1);
+            }
+          })
+        );
       },
 
       getMessages: (chatId) => {
@@ -64,26 +76,32 @@ export const useChatStore = create<ChatStore>()(
       },
 
       setMessages: (chatId, messages) => {
-        const chat = get().getChat(chatId);
-        if (chat) {
-          get().setChat({
-            ...chat,
-            messages,
-          });
-        }
+        set(
+          produce((state: Draft<ChatStore>) => {
+            updateChat(state, chatId, (chat) => {
+              chat.messages = messages;
+            });
+          })
+        );
       },
 
       addMessage: (chatId, message) => {
-        get().setMessages(chatId, [
-          ...(get().getMessages(chatId) ?? []),
-          message,
-        ]);
+        set(
+          produce((state: Draft<ChatStore>) => {
+            updateChat(state, chatId, (chat) => {
+              chat.messages.push(message);
+            });
+          })
+        );
       },
 
       popMessage: (chatId) => {
-        get().setMessages(
-          chatId,
-          (get().getMessages(chatId) ?? []).slice(0, -1)
+        set(
+          produce((state: Draft<ChatStore>) => {
+            updateChat(state, chatId, (chat) => {
+              chat.messages.pop();
+            });
+          })
         );
       },
 
@@ -93,15 +111,21 @@ export const useChatStore = create<ChatStore>()(
       },
 
       setStreamedMessage: (chatId, message) => {
-        set((state) => ({
-          chats: state.chats.map((chat) =>
-            chat.id === chatId ? { ...chat, streamedMessage: message } : chat
-          ),
-        }));
+        set(
+          produce((state: Draft<ChatStore>) => {
+            updateChat(state, chatId, (chat) => {
+              chat.streamedMessage = message;
+            });
+          })
+        );
       },
 
       setCurrentChatId: (chatId) => {
-        set({ currentChatId: chatId });
+        set(
+          produce((state: Draft<ChatStore>) => {
+            state.currentChatId = chatId;
+          })
+        );
       },
     }),
     {
@@ -122,8 +146,7 @@ export const useStreamedMessage = (chatId: string) => {
 
 export const useChatHistory = () => {
   const chats = useChatStore((state) => state.chats);
-  chats.sort((a, b) => b.timestamp - a.timestamp);
-  return chats;
+  return [...chats].sort((a, b) => b.timestamp - a.timestamp);
 };
 
 export const addChatIfNotExists = (chatId: string, title: string) => {
