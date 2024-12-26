@@ -2,15 +2,15 @@ import React from "react";
 import { chatCompletion } from "~/api/chat_api";
 import { useToast } from "~/components/ui/use-toast";
 import { useDelayedFlag } from "~/hooks/use_delayed_flag";
-import { deltaToAssistantMessage } from "~/lib/messages";
 import {
+  addChatIfNotExists,
   addMessage,
   popMessage,
   setMessages,
   setStreamedMessage,
 } from "~/lib/client_data";
 import { ChatCompletionMessage } from "~/lib/schema";
-import { useChatMessages, useStreamedMessage } from "./use_chat_messages";
+import { useChatMessages, useStreamedMessage } from "~/lib/client_data";
 import { v4 as uuidv4 } from "uuid";
 
 function streamCompletion({
@@ -135,6 +135,7 @@ export function useChat(chatId: string, model: string) {
     };
 
     const newMessages = [...messages, userMessage];
+    addChatIfNotExists(chatId, userMessage.content.slice(0, 100));
     setMessages(chatId, newMessages);
     submit(newMessages);
   };

@@ -12,9 +12,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "~/components/ui/sidebar";
-import { useChatHistory } from "~/hooks/use_chat_history";
 import { Button } from "./button";
-import { deleteChat } from "~/lib/client_data";
+import { deleteChat, useChatHistory } from "~/lib/client_data";
 
 export function AppSidebar() {
   const chats = useChatHistory();

@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "@remix-run/react";
 import { json, type MetaFunction } from "@vercel/remix";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AppSidebar } from "~/components/ui/app_sidebar";
 import { ChatMessageInput } from "~/components/ui/chat_message_input";
 import { ClearButton } from "~/components/ui/clear_button";
@@ -10,7 +10,7 @@ import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { useChat } from "~/hooks/use_chat";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
 import { withAuthentication } from "~/lib/auth";
-import { setChatId } from "~/lib/client_data";
+import { getChatId, setChatId } from "~/lib/client_data";
 import { v4 as uuidv4 } from "uuid";
 import { useModel } from "~/hooks/use_model";
 export const meta: MetaFunction = () => {
@@ -34,9 +34,18 @@ export default function Chat() {
   const params = useParams();
   const chatId = params.chatId!;
 
+  // server does not have any chat data, so we should not SSR
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
-    setChatId(chatId);
+    if (chatId !== getChatId()) {
+      setChatId(chatId);
+    }
   }, [chatId]);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   const [model, setModel] = useModel();
 
@@ -54,7 +63,7 @@ export default function Chat() {
     showRetryButton,
   } = useChat(chatId, model);
 
-  return (
+  return !isLoaded ? null : (
     <SidebarProvider className="h-full w-full">
       <AppSidebar />
       <div className="font-sans flex flex-col items-center h-full w-full">
