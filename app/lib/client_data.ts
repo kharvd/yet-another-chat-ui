@@ -20,7 +20,7 @@ type ChatStore = {
     message: ChatCompletionMessage | null
   ) => void;
 
-  currentChatId: string;
+  currentChatId: string | null;
   setCurrentChatId: (chatId: string) => void;
 };
 
@@ -28,7 +28,7 @@ export const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
       chats: [],
-      currentChatId: "",
+      currentChatId: null,
 
       getChat: (chatId) => {
         const existing = get().chats.find((c) => c.id === chatId);
