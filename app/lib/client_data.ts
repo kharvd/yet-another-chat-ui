@@ -2,6 +2,8 @@ import { Chat, ChatCompletionMessage, ChatHistorySchema } from "./schema";
 import { mutate } from "swr";
 
 export const chatKey = (chatId: string) => `chat-${chatId}-messages`;
+export const streamedMessageKey = (chatId: string) =>
+  `chat-${chatId}-streamed-message`;
 
 const getMessages = (chatId: string): ChatCompletionMessage[] => {
   const messages = JSON.parse(
@@ -39,6 +41,19 @@ export const setMessages = (
     title: messages[0]?.content.slice(0, 30) ?? "Untitled Chat",
   });
   mutate(chatKey(chatId), messages);
+};
+
+export const setStreamedMessage = (
+  chatId: string,
+  message: ChatCompletionMessage | null
+) => {
+  const key = streamedMessageKey(chatId);
+  if (!message) {
+    window.localStorage.removeItem(key);
+  } else {
+    window.localStorage.setItem(key, JSON.stringify(message));
+  }
+  mutate(key, message);
 };
 
 const getChats = () => {

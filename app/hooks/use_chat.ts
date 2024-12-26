@@ -3,21 +3,64 @@ import { chatCompletion } from "~/api/chat_api";
 import { useToast } from "~/components/ui/use-toast";
 import { useDelayedFlag } from "~/hooks/use_delayed_flag";
 import { deltaToAssistantMessage } from "~/lib/messages";
-import { addMessage, popMessage, setMessages } from "~/lib/client_data";
+import {
+  addMessage,
+  popMessage,
+  setMessages,
+  setStreamedMessage,
+} from "~/lib/client_data";
 import { ChatCompletionMessage } from "~/lib/schema";
-import { useChatMessages } from "./use_chat_messages";
+import { useChatMessages, useStreamedMessage } from "./use_chat_messages";
 import { v4 as uuidv4 } from "uuid";
+
+function streamCompletion({
+  chatId,
+  messages,
+  model,
+  onMessageUpdate,
+  onDone,
+}: {
+  chatId: string;
+  messages: ChatCompletionMessage[];
+  model: string;
+  onMessageUpdate: (message: ChatCompletionMessage) => void;
+  onDone: () => void;
+}) {
+  let streamedMessage: ChatCompletionMessage | null = null;
+  const onFinishStreaming = () => {
+    setStreamedMessage(chatId, null);
+    if (streamedMessage) {
+      addMessage(chatId, streamedMessage);
+    }
+    streamedMessage = null;
+  };
+  const { abort, promise } = chatCompletion({
+    messages,
+    model,
+    onMessageUpdate: (message) => {
+      streamedMessage = message;
+      setStreamedMessage(chatId, message);
+      onMessageUpdate(message);
+    },
+    onDone: () => {
+      onFinishStreaming();
+      onDone();
+    },
+  });
+
+  const wrappedAbort = () => {
+    abort();
+    onFinishStreaming();
+  };
+
+  return { abort: wrappedAbort, promise };
+}
 
 export function useChat(chatId: string, model: string) {
   const messages = useChatMessages(chatId);
+  const streamedMessage = useStreamedMessage(chatId);
   const { toast, dismiss } = useToast();
   const isStreamingRef = React.useRef(false);
-  const [streamedMessage, setStreamedMessage] =
-    React.useState<ChatCompletionMessage | null>(null);
-  const latestStreamedMessageRef = React.useRef<ChatCompletionMessage | null>(
-    null
-  );
-  latestStreamedMessageRef.current = streamedMessage;
 
   const [abortFunc, setAbortFunc] = React.useState<(() => void) | null>(null);
   const [showAbort, setShowAbortDelayed, resetShowAbort] = useDelayedFlag();
@@ -39,11 +82,6 @@ export function useChat(chatId: string, model: string) {
 
   const finishStreaming = () => {
     isStreamingRef.current = false;
-    setStreamedMessage(null);
-    if (latestStreamedMessageRef.current) {
-      addMessage(chatId, latestStreamedMessageRef.current);
-    }
-    latestStreamedMessageRef.current = null;
     setAbortFunc(null);
     resetShowAbort();
   };
@@ -56,12 +94,11 @@ export function useChat(chatId: string, model: string) {
   const submit = async (messages: ChatCompletionMessage[]) => {
     dismissError();
 
-    const { abort, promise } = chatCompletion({
+    const { abort, promise } = streamCompletion({
+      chatId,
       messages,
       model,
-      onMessageUpdate: (message) => {
-        setStreamedMessage(message);
-        latestStreamedMessageRef.current = message;
+      onMessageUpdate: () => {
         isStreamingRef.current = true;
       },
       onDone: finishStreaming,
@@ -121,9 +158,7 @@ export function useChat(chatId: string, model: string) {
   };
 
   return {
-    messages: streamedMessage
-      ? [...messages, deltaToAssistantMessage(streamedMessage)]
-      : messages,
+    messages: streamedMessage ? [...messages, streamedMessage] : messages,
     postMessage,
     isInputDisabled: isLastCommittedMessageUser,
     messageDraft,
