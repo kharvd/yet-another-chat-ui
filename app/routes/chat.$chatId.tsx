@@ -13,7 +13,6 @@ import { withAuthentication } from "~/lib/auth";
 import { getChatId, setChatId } from "~/lib/client_data";
 import { v4 as uuidv4 } from "uuid";
 import { useModel } from "~/hooks/use_model";
-import { useScrollToBottom } from "~/hooks/use_scroll_to_bottom";
 export const meta: MetaFunction = () => {
   return [
     { title: "Chat - Yet Another Chat UI" },
