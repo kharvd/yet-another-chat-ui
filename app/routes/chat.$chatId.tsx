@@ -13,6 +13,7 @@ import { withAuthentication } from "~/lib/auth";
 import { getChatId, setChatId } from "~/lib/client_data";
 import { v4 as uuidv4 } from "uuid";
 import { useModel } from "~/hooks/use_model";
+import { useScrollToBottom } from "~/hooks/use_scroll_to_bottom";
 export const meta: MetaFunction = () => {
   return [
     { title: "Chat - Yet Another Chat UI" },
@@ -41,6 +42,7 @@ export default function Chat() {
     if (chatId !== getChatId()) {
       setChatId(chatId);
     }
+    inputRef.current?.focus();
   }, [chatId]);
 
   useEffect(() => {
@@ -80,7 +82,6 @@ export default function Chat() {
               const newChatId = uuidv4();
               setChatId(newChatId);
               navigate(`/chat/${newChatId}`);
-              inputRef.current?.focus();
             }}
             className="mr-4 mt-1"
           />
