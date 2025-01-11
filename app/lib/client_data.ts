@@ -12,6 +12,7 @@ type ChatStore = Readonly<{
   getMessages: (chatId: string) => ChatCompletionMessage[] | null;
   setMessages: (chatId: string, messages: ChatCompletionMessage[]) => void;
   addMessage: (chatId: string, message: ChatCompletionMessage) => void;
+  sliceMessages: (chatId: string, start: number, end: number) => void;
   popMessage: (chatId: string) => void;
 
   getStreamedMessage: (chatId: string) => ChatCompletionMessage | null;
@@ -95,6 +96,16 @@ const useChatStore = create<ChatStore>()(
         );
       },
 
+      sliceMessages: (chatId, start, end) => {
+        set(
+          produce((state: Draft<ChatStore>) => {
+            updateChat(state, chatId, (chat) => {
+              chat.messages = chat.messages.slice(start, end);
+            });
+          })
+        );
+      },
+
       popMessage: (chatId) => {
         set(
           produce((state: Draft<ChatStore>) => {
@@ -161,6 +172,10 @@ export const addChatIfNotExists = (chatId: string, title: string) => {
 
 export const addMessage = (chatId: string, message: ChatCompletionMessage) => {
   useChatStore.getState().addMessage(chatId, message);
+};
+
+export const sliceMessages = (chatId: string, start: number, end: number) => {
+  useChatStore.getState().sliceMessages(chatId, start, end);
 };
 
 export const popMessage = (chatId: string) => {

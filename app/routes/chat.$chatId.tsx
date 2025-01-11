@@ -10,7 +10,7 @@ import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { useChat } from "~/hooks/use_chat";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
 import { withAuthentication } from "~/lib/auth";
-import { getChatId, setChatId } from "~/lib/client_data";
+import { getChatId, setChatId, sliceMessages } from "~/lib/client_data";
 import { v4 as uuidv4 } from "uuid";
 import { useModel } from "~/hooks/use_model";
 export const meta: MetaFunction = () => {
@@ -64,6 +64,13 @@ export default function Chat() {
     showRetryButton,
   } = useChat(chatId, model);
 
+  const onEdit = (messageIndex: number) => {
+    const message = messages[messageIndex];
+    setMessageDraft(message.content);
+    sliceMessages(chatId, 0, messageIndex);
+    inputRef.current?.focus();
+  };
+
   return !isLoaded ? null : (
     <SidebarProvider className="h-full w-full">
       <AppSidebar />
@@ -92,6 +99,7 @@ export default function Chat() {
           showError={showRetryButton}
           onAbort={onAbort}
           onRetry={onRetry}
+          onEdit={onEdit}
         />
 
         <ChatMessageInput

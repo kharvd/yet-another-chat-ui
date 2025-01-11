@@ -11,6 +11,7 @@ export function ScrollableMessageList({
   showError,
   onAbort,
   onRetry,
+  onEdit,
   className,
 }: {
   messages: ChatCompletionMessage[];
@@ -18,6 +19,7 @@ export function ScrollableMessageList({
   showError: boolean;
   onAbort: () => void;
   onRetry: () => void;
+  onEdit: (messageIndex: number) => void;
   className?: string;
 }) {
   const scrollToBottomDeps = [messages, showAbort];
@@ -30,7 +32,11 @@ export function ScrollableMessageList({
       >
         <div className="w-full lg:w-7/12 pb-4">
           {messages.map((message, index) => (
-            <Message key={index} message={message} />
+            <Message
+              key={index}
+              message={message}
+              onEdit={() => onEdit(index)}
+            />
           ))}
         </div>
       </div>
