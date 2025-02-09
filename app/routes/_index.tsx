@@ -1,7 +1,11 @@
 import { HeadersFunction } from "@remix-run/node";
 import { type MetaFunction, json } from "@vercel/remix";
 import { withAuthentication } from "~/lib/auth";
-import { useNavigate } from "@remix-run/react";
+import {
+  isRouteErrorResponse,
+  useNavigate,
+  useRouteError,
+} from "@remix-run/react";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect } from "react";
 import { getChatId } from "~/lib/client_data";
@@ -34,6 +38,19 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 
   return headers;
 };
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    switch (error.status) {
+      case 401:
+        return <div>Unauthorized</div>;
+      default:
+        return <div>Error</div>;
+    }
+  }
+}
 
 export default function Index() {
   const navigate = useNavigate();
