@@ -8,12 +8,17 @@ export type ModelDef = {
 
 export const MODEL_DEFS: ReadonlyArray<ModelDef> = [
   {
-    api_name: "gpt-4o-2024-05-13",
+    api_name: "gpt-4o",
     display_name: "GPT-4o",
     provider: "openai",
   },
   {
-    api_name: "gpt-4o-mini-2024-07-18",
+    api_name: "chatgpt-4o-latest",
+    display_name: "ChatGPT-4o",
+    provider: "openai",
+  },
+  {
+    api_name: "gpt-4o-mini",
     display_name: "GPT-4o Mini",
     provider: "openai",
   },
