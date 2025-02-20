@@ -1,5 +1,5 @@
 import React from "react";
-import { chatCompletion } from "~/api/chat_api";
+import { chatCompletion, generateTitle } from "~/api/chat_api";
 import { useToast } from "~/components/ui/use-toast";
 import { useDelayedFlag } from "~/hooks/use_delayed_flag";
 import {
@@ -8,6 +8,7 @@ import {
   popMessage,
   setMessages,
   setStreamedMessage,
+  updateChatTitle,
 } from "~/lib/client_data";
 import { ChatCompletionMessage } from "~/lib/schema";
 import { useChatMessages, useStreamedMessage } from "~/lib/client_data";
@@ -135,8 +136,20 @@ export function useChat(chatId: string, model: string) {
     };
 
     const newMessages = [...messages, userMessage];
-    addChatIfNotExists(chatId, userMessage.content.slice(0, 100));
+    const defaultTitle = message.slice(0, 100);
+    addChatIfNotExists(chatId, defaultTitle);
     setMessages(chatId, newMessages);
+
+    if (messages.length === 0) {
+      generateTitle(message)
+        .then(title => {
+          updateChatTitle(chatId, title);
+        })
+        .catch(e => {
+          console.error("Failed to generate title:", e);
+        });
+    }
+
     submit(newMessages);
   };
 

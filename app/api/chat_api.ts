@@ -6,6 +6,21 @@ import {
   ChatCompletionMessage,
 } from "~/lib/schema";
 
+export async function generateTitle(message: string): Promise<string> {
+  const response = await fetch("/api/title", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message,
+    }),
+  });
+
+  const data = await response.json();
+  return data.title;
+}
+
 export function chatCompletion({
   messages,
   model,

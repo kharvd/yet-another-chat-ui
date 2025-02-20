@@ -7,6 +7,7 @@ type ChatStore = Readonly<{
   chats: readonly Chat[];
   getChat: (chatId: string) => Chat | null;
   addChatIfNotExists: (chat: Chat) => void;
+  updateChatTitle: (chatId: string, title: string) => void;
   deleteChat: (chatId: string) => void;
 
   getMessages: (chatId: string) => ChatCompletionMessage[] | null;
@@ -58,6 +59,16 @@ const useChatStore = create<ChatStore>()(
             })
           );
         }
+      },
+
+      updateChatTitle: (chatId, title) => {
+        set(
+          produce((state: Draft<ChatStore>) => {
+            updateChat(state, chatId, (chat) => {
+              chat.title = title;
+            });
+          })
+        );
       },
 
       deleteChat: (chatId) => {
@@ -206,4 +217,8 @@ export const getChatId = () => {
 
 export const setChatId = (chatId: string) => {
   useChatStore.getState().setCurrentChatId(chatId);
+};
+
+export const updateChatTitle = (chatId: string, title: string) => {
+  useChatStore.getState().updateChatTitle(chatId, title);
 };
