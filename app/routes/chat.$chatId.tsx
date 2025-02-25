@@ -7,12 +7,14 @@ import { ClearButton } from "~/components/ui/clear_button";
 import { ModelSelector } from "~/components/ui/model_selector";
 import { ScrollableMessageList } from "~/components/ui/scrollable_message_list";
 import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import { ThinkingSelector } from "~/components/ui/thinking_selector";
 import { useChat } from "~/hooks/use_chat";
 import { useFocusOnMount } from "~/hooks/use_focus_on_mount";
 import { withAuthentication } from "~/lib/auth";
 import { getChatId, setChatId, sliceMessages } from "~/lib/client_data";
 import { v4 as uuidv4 } from "uuid";
-import { useModel } from "~/hooks/use_model";
+import { useModel, useThinkingLevel } from "~/hooks/use_model";
+import { THINKING_MODELS } from "~/api/providers/anthropic_provider";
 export const meta: MetaFunction = () => {
   return [
     { title: "Chat - Yet Another Chat UI" },
@@ -49,6 +51,15 @@ export default function Chat() {
   }, []);
 
   const [model, setModel] = useModel();
+  const [thinkingLevel, setThinkingLevel] = useThinkingLevel();
+  const isThinkingSupported = THINKING_MODELS.includes(model as any);
+
+  // If the model doesn't support thinking, make sure it's set to "none"
+  useEffect(() => {
+    if (!isThinkingSupported && thinkingLevel !== "none") {
+      setThinkingLevel("none");
+    }
+  }, [model, isThinkingSupported, thinkingLevel, setThinkingLevel]);
 
   const inputRef = useFocusOnMount<HTMLTextAreaElement>();
 
@@ -62,7 +73,7 @@ export default function Chat() {
     onRetry,
     showAbortButton,
     showRetryButton,
-  } = useChat(chatId, model);
+  } = useChat(chatId, model, thinkingLevel);
 
   const onEdit = (messageIndex: number) => {
     const message = messages[messageIndex];
@@ -78,8 +89,13 @@ export default function Chat() {
         <div className="flex flex-row pt-3 pb-3 w-full">
           <SidebarTrigger className="ml-4 mt-1" />
 
-          <div className="flex flex-row flex-grow justify-center w-fit">
+          <div className="flex flex-row flex-grow justify-center gap-2 w-fit">
             <ModelSelector value={model} onChange={setModel} />
+            <ThinkingSelector
+              value={thinkingLevel}
+              onChange={setThinkingLevel}
+              disabled={!isThinkingSupported}
+            />
           </div>
 
           <ClearButton

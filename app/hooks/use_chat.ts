@@ -13,17 +13,20 @@ import {
 import { ChatCompletionMessage } from "~/lib/schema";
 import { useChatMessages, useStreamedMessage } from "~/lib/client_data";
 import { v4 as uuidv4 } from "uuid";
+import { THINKING_BUDGETS, ThinkingLevel } from "./use_model";
 
 function streamCompletion({
   chatId,
   messages,
   model,
+  thinkingLevel,
   onMessageUpdate,
   onDone,
 }: {
   chatId: string;
   messages: ChatCompletionMessage[];
   model: string;
+  thinkingLevel: ThinkingLevel;
   onMessageUpdate: (message: ChatCompletionMessage) => void;
   onDone: () => void;
 }) {
@@ -38,6 +41,8 @@ function streamCompletion({
   const { abort, promise } = chatCompletion({
     messages,
     model,
+    enableThinking: thinkingLevel !== "none",
+    thinkingBudget: THINKING_BUDGETS[thinkingLevel],
     onMessageUpdate: (message) => {
       streamedMessage = message;
       setStreamedMessage(chatId, message);
@@ -57,7 +62,7 @@ function streamCompletion({
   return { abort: wrappedAbort, promise };
 }
 
-export function useChat(chatId: string, model: string) {
+export function useChat(chatId: string, model: string, thinkingLevel: ThinkingLevel) {
   const messages = useChatMessages(chatId);
   const streamedMessage = useStreamedMessage(chatId);
   const { toast, dismiss } = useToast();
@@ -99,6 +104,7 @@ export function useChat(chatId: string, model: string) {
       chatId,
       messages,
       model,
+      thinkingLevel,
       onMessageUpdate: () => {
         isStreamingRef.current = true;
       },

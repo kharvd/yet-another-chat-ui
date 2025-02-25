@@ -9,9 +9,12 @@ const RequestSchema = z.object({
       id: z.string(),
       role: z.enum(["user", "assistant", "system"]),
       content: z.string(),
+      thinking: z.string().optional(),
     })
   ),
   model: z.string(),
+  enableThinking: z.boolean().optional(),
+  thinkingBudget: z.number().optional(),
 });
 
 export const action = async ({
@@ -30,6 +33,8 @@ export const action = async ({
           const stream = chatCompletion({
             messages: req.messages,
             model: req.model,
+            enableThinking: req.enableThinking,
+            thinkingBudget: req.thinkingBudget || 10000, // Default to 10k token budget
           });
 
           for await (const chunk of stream) {

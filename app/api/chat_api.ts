@@ -26,11 +26,15 @@ export function chatCompletion({
   model,
   onMessageUpdate,
   onDone,
+  enableThinking = false,
+  thinkingBudget,
 }: {
   messages: ChatCompletionMessage[];
   model: string;
   onMessageUpdate: (message: ChatCompletionMessage) => void;
   onDone: () => void;
+  enableThinking?: boolean;
+  thinkingBudget?: number;
 }): { abort: () => void; promise: Promise<void> } {
   const abortController = new AbortController();
   let streamedMessage: ChatCompletionDelta | null = null;
@@ -43,6 +47,8 @@ export function chatCompletion({
     body: JSON.stringify({
       messages,
       model,
+      enableThinking,
+      thinkingBudget,
     }),
     signal: abortController.signal,
     openWhenHidden: true,

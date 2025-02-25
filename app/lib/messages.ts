@@ -8,11 +8,15 @@ export function accumulateMessage(
   const id = prev?.id ?? uuidv4();
   const role = (prev?.role ?? "") + (delta.role ?? "");
   const content = (prev?.content ?? "") + (delta.content ?? "");
+  const thinking = delta.thinking ? 
+    (prev?.thinking ? prev.thinking + delta.thinking : delta.thinking) : 
+    prev?.thinking ?? "";
 
   return {
     id,
     role,
     content,
+    thinking,
   };
 }
 
@@ -23,5 +27,6 @@ export function deltaToAssistantMessage(
     id: delta.id ?? uuidv4(),
     role: "assistant",
     content: delta.content ?? "",
+    thinking: delta.thinking,
   };
 }

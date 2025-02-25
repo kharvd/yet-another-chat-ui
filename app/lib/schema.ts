@@ -4,6 +4,7 @@ export const ChatCompletionDeltaSchema = z.object({
   id: z.string().optional(),
   role: z.string().optional(),
   content: z.string().optional(),
+  thinking: z.string().optional(),
 });
 export type ChatCompletionDelta = z.infer<typeof ChatCompletionDeltaSchema>;
 
@@ -15,6 +16,7 @@ export const ChatCompletionMessageSchema = z.object({
     z.literal("system"),
   ]),
   content: z.string(),
+  thinking: z.string().optional(),
 });
 
 export type ChatCompletionMessage = z.infer<typeof ChatCompletionMessageSchema>;
