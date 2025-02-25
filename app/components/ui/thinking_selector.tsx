@@ -13,10 +13,10 @@ import {
 import { ThinkingLevel } from "~/hooks/use_model";
 
 const thinkingLevels: { value: ThinkingLevel; label: string }[] = [
-  { value: "none", label: "No thinking" },
-  { value: "low", label: "Low (10k tokens)" },
-  { value: "medium", label: "Medium (30k tokens)" },
-  { value: "high", label: "High (60k tokens)" },
+  { value: "none", label: "None" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
 ];
 
 export function ThinkingSelector({
@@ -36,7 +36,7 @@ export function ThinkingSelector({
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className="w-[100px] justify-between overflow-hidden"
           disabled={disabled}
         >
           {thinkingLevels.find((level) => level.value === value)?.label ||
