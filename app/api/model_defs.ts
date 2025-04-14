@@ -13,6 +13,11 @@ export const MODEL_DEFS: ReadonlyArray<ModelDef> = [
     provider: "openai",
   },
   {
+    api_name: "gpt-4.1",
+    display_name: "GPT-4.1",
+    provider: "openai",
+  },
+  {
     api_name: "chatgpt-4o-latest",
     display_name: "ChatGPT-4o",
     provider: "openai",

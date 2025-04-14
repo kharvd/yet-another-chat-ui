@@ -56,11 +56,7 @@ export const completeOpenAiGeneric = async function* ({
 
 export const CHAT_GPT_SYSTEM_PROMPT = `
 You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4 architecture.
-Knowledge cutoff: 2023-10
 Current date: {current_date}
-
-Image input capabilities: Disabled
-Personality: v2
 `.trim();
 export const completeOpenAi: CompletionFunction = ({ messages, model }) => {
   if (messages[0].role !== "system") {
